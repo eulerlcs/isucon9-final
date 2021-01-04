@@ -1,0 +1,17 @@
+server:
+  port: 8000
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.77.171:13306/isutrain?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
+    username: isutrain
+    password: isutrain
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+logging:
+  level:
+    root: debug
+
