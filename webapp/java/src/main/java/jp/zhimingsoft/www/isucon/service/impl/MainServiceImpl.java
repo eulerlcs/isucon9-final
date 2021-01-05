@@ -12,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -33,6 +31,9 @@ public class MainServiceImpl implements MainService {
 
     @Autowired
     private TrainTimetableMasterDao trainTimetableMasterDao;
+
+    @Autowired
+    private SeatMasterDao seatMasterDao;
 
     @Override
     public InitializeResponse initializeHandler() {
@@ -89,9 +90,6 @@ public class MainServiceImpl implements MainService {
 
         */
 
-        List<TrainSearchResponse> list = new ArrayList<>();
-
-
         if (!Utils.checkAvailableDate(use_at)) {
             throw new IsuconException("予約可能期間外です", HttpStatus.NOT_FOUND);
         }
@@ -134,9 +132,7 @@ public class MainServiceImpl implements MainService {
         }
         List<TrainMaster> trainList = trainMasterDao.selectByDateClassNobori(date.toLocalDate(), usableTrainClassList, isNobori);
 
-
-        List<TrainSearchResponse> trainSearchResponseList = null;
-
+        List<TrainSearchResponse> trainSearchResponseList = new ArrayList<>();
         for (TrainMaster train : trainList) {
             boolean isSeekedToFirstStation = false;
             boolean isContainsOriginStation = false;
@@ -187,122 +183,187 @@ public class MainServiceImpl implements MainService {
 
                 TrainTimetableMaster trainTimetableMaster = trainTimetableMasterDao.selectOne(date.toLocalDate(), train.getTrainClass(), train.getTrainName(), fromStation.getName());
                 departure = trainTimetableMaster.getDeparture();
+
+                trainTimetableMaster = trainTimetableMasterDao.selectOne(date.toLocalDate(), train.getTrainClass(), train.getTrainName(), toStation.getName());
                 arrival = trainTimetableMaster.getArrival();
 
-                if (!date.toLocalTime().isBefore(departure) ) {
+                if (!date.toLocalTime().isBefore(departure)) {
                     // 乗りたい時刻より出発時刻が前なので除外;
                     continue;
                 }
 
-                  /*
+                List<SeatMaster> premium_avail_seats = getAvailableSeats(train, fromStation, toStation, "premium", false);
 
-                premium_avail_seats, err = train.getAvailableSeats(fromStation, toStation, "premium", false);
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
-                premium_smoke_avail_seats, err = train.getAvailableSeats(fromStation, toStation, "premium", true);
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
+                List<SeatMaster> premium_smoke_avail_seats = getAvailableSeats(train, fromStation, toStation, "premium", true);
 
-                reserved_avail_seats, err = train.getAvailableSeats(fromStation, toStation, "reserved", false);
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
-                reserved_smoke_avail_seats, err = train.getAvailableSeats(fromStation, toStation, "reserved", true);
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
+                List<SeatMaster> reserved_avail_seats = getAvailableSeats(train, fromStation, toStation, "reserved", false);
 
-                premium_avail = "○";
-                if (len(premium_avail_seats) == 0 ) {
+                List<SeatMaster> reserved_smoke_avail_seats = getAvailableSeats(train, fromStation, toStation, "reserved", true);
+
+
+                String premium_avail = "○";
+                if (premium_avail_seats == null || premium_avail_seats.size() == 0) {
                     premium_avail = "×";
-                } else if (len(premium_avail_seats) < 10 ) {
+                } else if (premium_avail_seats.size() < 10) {
                     premium_avail = "△";
                 }
 
-                premium_smoke_avail = "○";
-                if (len(premium_smoke_avail_seats) == 0 ) {
+                String premium_smoke_avail = "○";
+                if (premium_smoke_avail_seats == null || premium_smoke_avail_seats.size() == 0) {
                     premium_smoke_avail = "×";
-                } else if (len(premium_smoke_avail_seats) < 10 ) {
+                } else if (premium_smoke_avail_seats.size() < 10) {
                     premium_smoke_avail = "△";
                 }
 
-                reserved_avail = "○";
-                if (len(reserved_avail_seats) == 0 ) {
+                String reserved_avail = "○";
+                if (reserved_avail_seats == null || reserved_avail_seats.size() == 0) {
                     reserved_avail = "×";
-                } else if (len(reserved_avail_seats) < 10 ) {
+                } else if (reserved_avail_seats.size() < 10) {
                     reserved_avail = "△";
                 }
 
-                reserved_smoke_avail = "○";
-                if (len(reserved_smoke_avail_seats) == 0 ) {
+                String reserved_smoke_avail = "○";
+                if (reserved_smoke_avail_seats == null || reserved_smoke_avail_seats.size() == 0) {
                     reserved_smoke_avail = "×";
-                } else if (len(reserved_smoke_avail_seats) < 10 ) {
+                } else if (reserved_smoke_avail_seats.size() < 10) {
                     reserved_smoke_avail = "△";
                 }
 
                 // 空席情報;
-                seatAvailability = map[string]string{
-                    "premium":        premium_avail,;
-                    "premium_smoke":  premium_smoke_avail,;
-                    "reserved":       reserved_avail,;
-                    "reserved_smoke": reserved_smoke_avail,;
-                    "non_reserved":   "○",;
-                }
+                Map<String, String> seatAvailability = Map.of(
+                        "premium", premium_avail,
+                        "premium_smoke", premium_smoke_avail,
+                        "reserved", reserved_avail,
+                        "reserved_smoke", reserved_smoke_avail,
+                        "non_reserved", "○"
+                );
 
                 // 料金計算;
-                premiumFare, err = fareCalc(date, fromStation.ID, toStation.ID, train.TrainClass, "premium");
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
-                premiumFare = premiumFare*adult + premiumFare/2*child;
+                int premiumFare = fareCalc(date.toLocalTime(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "premium");
+                premiumFare = premiumFare * adult + premiumFare / 2 * child;
 
-                reservedFare, err = fareCalc(date, fromStation.ID, toStation.ID, train.TrainClass, "reserved");
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
-                reservedFare = reservedFare*adult + reservedFare/2*child;
+                int reservedFare = fareCalc(date.toLocalTime(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "reserved");
+                reservedFare = reservedFare * adult + reservedFare / 2 * child;
 
-                nonReservedFare, err = fareCalc(date, fromStation.ID, toStation.ID, train.TrainClass, "non-reserved");
-                if (err != nil ) {
-                    errorResponse(w, http.StatusBadRequest, err.Error());
-                    return;
-                }
-                nonReservedFare = nonReservedFare*adult + nonReservedFare/2*child;
+                int nonReservedFare = fareCalc(date.toLocalTime(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "non-reserved");
+                nonReservedFare = nonReservedFare * adult + nonReservedFare / 2 * child;
 
-                fareInformation = map[string]int{
-                    "premium":        premiumFare,;
-                    "premium_smoke":  premiumFare,;
-                    "reserved":       reservedFare,;
-                    "reserved_smoke": reservedFare,;
-                    "non_reserved":   nonReservedFare,;
-                }
+                Map<String, Integer> fareInformation = Map.of(
+                        "premium", premiumFare,
+                        "premium_smoke", premiumFare,
+                        "reserved", reservedFare,
+                        "reserved_smoke", reservedFare,
+                        "non_reserved", nonReservedFare
+                );
 
-                trainSearchResponseList = append(trainSearchResponseList, TrainSearchResponse{
-                    train.TrainClass, train.TrainName, train.StartStation, train.LastStation,;
-                    fromStation.Name, toStation.Name, departure, arrival, seatAvailability, fareInformation,;
-                });
+                trainSearchResponseList.add(new TrainSearchResponse(
+                        train.getTrainClass(), train.getTrainName(), train.getStartStation(), train.getLastStation(),
+                        fromStation.getName(), toStation.getName(), departure.toString(), arrival.toString(), seatAvailability, fareInformation
+                ));
 
-                if (len(trainSearchResponseList) >= 10 ) {
+                if (trainSearchResponseList.size() >= 10) {
                     break;
                 }
 
-                 */
             }
         }
 
 
-        if (list == null || list.size() == 0) {
+        if (trainSearchResponseList == null || trainSearchResponseList.size() == 0) {
             throw new IsuconException("sql: no rows in result set", HttpStatus.BAD_REQUEST);
         }
 
-        return list;
+        return trainSearchResponseList;
+    }
+
+    private List<SeatMaster> getAvailableSeats(TrainMaster train, StationMaster fromStation, StationMaster toStation, String seatClass, boolean isSmokingSeat) {
+        // 指定種別の空き座席を返す
+
+        // 全ての座席を取得する
+        List<SeatMaster> seatList = seatMasterDao.selectSeatList(train.getTrainClass(), seatClass, isSmokingSeat);
+
+        Map<String, SeatMaster> availableSeatMap = new HashMap<>();
+        for (SeatMaster seat : seatList) {
+            String key = seat.getCarNumber() + "_" + seat.getSeatRow() + seat.getSeatColumn();
+            availableSeatMap.put(key, seat);
+        }
+
+        // すでに取られている予約を取得する
+        List<SeatReservations> seatReservationList = seatReservationsDao.selectReservedSeatList(train.getIsNobori(), fromStation.getId(), toStation.getId());
+
+        for (SeatReservations seatReservation : seatReservationList) {
+            String key = seatReservation.getCarNumber() + "_" + seatReservation.getSeatRow() + "_" + seatReservation.getSeatColumn();
+            availableSeatMap.remove(key);
+        }
+
+        return new ArrayList<>(availableSeatMap.values());
+    }
+
+
+    private int fareCalc(LocalTime date, Long depStation, Long destStation, String trainClass, String seatClass) {
+        //;
+        // 料金計算メモ;
+        // 距離運賃(円) * 期間倍率(繁忙期なら2倍等) * 車両クラス倍率(急行・各停等) * 座席クラス倍率(プレミアム・指定席・自由席);
+        //;
+
+
+        StationMaster fromStation, toStation;
+
+      /*
+        query = "SELECT * FROM station_master WHERE id=?";
+
+        // From;
+        err = dbx.Get(&fromStation, query, depStation);
+        if (err == sql.ErrNoRows ) {
+            return 0, err;
+        }
+        if (err != nil ) {
+            return 0, err;
+        }
+
+        // To;
+        err = dbx.Get(&toStation, query, destStation);
+        if (err == sql.ErrNoRows ) {
+            return 0, err;
+        }
+        if (err != nil ) {
+            log.Print(err);
+            return 0, err;
+        }
+
+        log.info("distance", math.Abs(toStation.Distance-fromStation.Distance));
+        distFare, err = getDistanceFare(math.Abs(toStation.Distance - fromStation.Distance));
+        if (err != nil ) {
+            return 0, err;
+        }
+        log.info("distFare", distFare);
+
+        // 期間・車両・座席クラス倍率;
+        fareList = []Fare{};
+        query = "SELECT * FROM fare_master WHERE train_class=? AND seat_class=? ORDER BY start_date";
+        err = dbx.Select(&fareList, query, trainClass, seatClass);
+        if (err != nil ) {
+            return 0, err;
+        }
+
+        if (len(fareList) == 0 ) {
+            return 0, fmt.Errorf("fare_master does not exists");
+        }
+
+        selectedFare = fareList[0];
+        date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC);
+        for _, fare = range fareList {
+            if (!date.Before(fare.StartDate) ) {
+                log.info(fare.StartDate, fare.FareMultiplier);
+                selectedFare = fare;
+            }
+        }
+
+        log.info("%%%%%%%%%%%%%%%%%%%");
+
+        return int(float64(distFare) * selectedFare.FareMultiplier), nil;
+    };
+*/
+        return 9999;
     }
 }

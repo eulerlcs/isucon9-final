@@ -1,16 +1,42 @@
 package jp.zhimingsoft.www.isucon.dao;
 
 import java.util.List;
+
 import jp.zhimingsoft.www.isucon.domain.SeatReservations;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.SelectProvider;
+import org.apache.ibatis.builder.annotation.ProviderMethodResolver;
+import org.apache.ibatis.jdbc.SQL;
 
 public interface SeatReservationsDao {
+    public static final String TABLE_NAME = "seat_reservations";
 
     @Delete("truncate seat_reservations")
     void truncate();
 
-    int insert(SeatReservations record);
+    @SelectProvider(sqlProvider.class)
+    List<SeatReservations> selectReservedSeatList(boolean is_nobori, Long from_station_id, Long to_station_id);
 
-    List<SeatReservations> selectAll();
+    class sqlProvider implements ProviderMethodResolver {
+        public String selectReservedSeatList(boolean is_nobori, Long from_station_id, Long to_station_id) {
+            return new SQL() {{
+                SELECT("sr.*");
+                FROM("seat_reservations sr, reservations r, seat_master s, station_master std, station_master sta");
+                WHERE("r.reservation_id=sr.reservation_id");
+                WHERE("s.train_class=r.train_class");
+                WHERE("s.car_number=sr.car_number");
+                WHERE("s.seat_column=sr.seat_column");
+                WHERE("s.seat_row=sr.seat_row");
+                WHERE("std.name=r.departure");
+                WHERE("sta.name=r.arrival");
+
+                if (is_nobori) {
+                    WHERE(" ((sta.id <  #{from_station_id} AND #{from_station_id} <= std.id) OR (sta.id < #{to_station_id}  AND #{to_station_id}  <= std.id) OR (#{from_station_id} < sta.id AND std.id < #{to_station_id}))");
+                } else {
+                    WHERE(" ((std.id <= #{from_station_id} AND #{from_station_id} < sta.id) OR (std.id <= #{to_station_id} AND #{to_station_id} < sta.id) OR (sta.id < #{from_station_id} AND #{to_station_id} < std.id))");
+                }
+            }}.toString();
+        }
+    }
 }

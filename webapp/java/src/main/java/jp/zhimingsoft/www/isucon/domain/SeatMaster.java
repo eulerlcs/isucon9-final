@@ -1,6 +1,7 @@
 package jp.zhimingsoft.www.isucon.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jp.zhimingsoft.www.isucon.dao.SeatClass;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
