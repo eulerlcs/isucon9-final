@@ -2,17 +2,12 @@ version: '3'
 
 services:
 
-  nginx:
-    image: nginx:1.17
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./frontend/dist:/opt/isucon/public
+  webapp:
+    build:
+      context: ..
+    image: isucon-9-final-java-webapp
     ports:
-      - "8080:80"
-      - "5000:5000"
-    links:
-      - "webapp"
-      - "payment"
+      - "8000:8000"
 
   mysql:
     image: mysql:8
@@ -20,43 +15,11 @@ services:
     environment:
       - "TZ=Asia/Tokyo"
     env_file:
-      - ".env"
+      - "../../.env"
     volumes:
-      - mysql:/var/lib/mysql
-      - ./sql:/docker-entrypoint-initdb.d
-      - ./mysql/conf.d:/etc/mysql/conf.d
+      - ../../mysql_data:/var/lib/mysql
+      - ../../sql:/docker-entrypoint-initdb.d
+      - ../../mysql/conf.d:/etc/mysql/conf.d
     # development only
     ports:
       - "13306:3306"
-
-  payment:
-    image: golang:1.12
-    volumes:
-      - ../blackbox/payment:/go/src/payment
-    environment:
-      - "GO111MODULE=on"
-    command:
-      - go
-      - run
-      - main.go
-    working_dir: /go/src/payment
-    env_file:
-      - ".env"
-
-  # development only
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    environment:
-      - PMA_ARBITRARY=1
-      - PMA_HOST=mysql
-      - PMA_USER=root
-      - PMA_PASSWORD=password
-    links:
-      - mysql
-    ports:
-       - 8082:80
-    volumes:
-       - /sessions
-
-volumes:
-  mysql:

@@ -17,7 +17,7 @@
     <properties>
         <java.version>11</java.version>
         <docker.image.prefix></docker.image.prefix>
-        <docker.image.name>webapp_webapp_g</docker.image.name>
+        <docker.image.name>isucon-9-final-java-webapp</docker.image.name>
         <docker.allowInsecureRegistries>false</docker.allowInsecureRegistries>
     </properties>
 

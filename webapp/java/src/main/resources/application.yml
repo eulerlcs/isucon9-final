@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.77.171:13306/isutrain?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
+    url: jdbc:mysql://127.0.0.1:13306/isutrain?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
     username: isutrain
     password: isutrain
 
