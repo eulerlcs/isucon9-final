@@ -16,22 +16,3 @@ services:
     # development only
     ports:
       - "13306:3306"
-
-  webapp:
-    build:
-      context: ..
-    image: isucon-9-final-java-webapp
-    ports:
-      - "8000:8000"
-    env_file:
-      - "../../.env"
-    environment:
-      - "MYSQL_HOSTNAME=mysql8"
-      - "MYSQL_PORT=3306"
-    depends_on:
-      - mysql8
-
-#networks:
-#  default:
-#    external: false
-#    name: isucon-9-final-java

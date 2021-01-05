@@ -4,9 +4,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:13306/isutrain?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
-    username: isutrain
-    password: isutrain
+    url: jdbc:mysql://${MYSQL_HOSTNAME:localhost}:${MYSQL_PORT:13306}/${MYSQL_DATABASE:isutrain}?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
+    username: ${MYSQL_USER:isutrain}
+    password: ${MYSQL_PASSWORD:isutrain}
 
   jackson:
     property-naming-strategy: SNAKE_CASE
@@ -14,4 +14,3 @@ spring:
 logging:
   level:
     root: debug
-

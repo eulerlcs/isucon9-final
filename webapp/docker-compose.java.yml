@@ -8,6 +8,7 @@ services:
       - ".env"
     environment:
       - "PAYMENT_API"
+      - MYSQL_PORT: 3306
     links:
       - payment
     ports:
