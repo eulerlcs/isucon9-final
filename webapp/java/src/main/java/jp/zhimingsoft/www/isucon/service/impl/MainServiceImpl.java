@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
@@ -89,11 +92,10 @@ public class MainServiceImpl implements MainService {
             Integer adult,
             Integer child) {
 
-        if (!Utils.checkAvailableDate(use_at)) {
+        ZonedDateTime date = use_at.withZoneSameInstant(ZoneOffset.ofHours(9));
+        if (!Utils.checkAvailableDate(date)) {
             throw new IsuconException("予約可能期間外です", HttpStatus.NOT_FOUND);
         }
-
-        LocalDateTime date = use_at.withZoneSameInstant(ZoneOffset.ofHours(9)).toLocalDateTime();
 
         StationMaster fromStation = stationMasterDao.selectByName(from);
         if (fromStation == null) {
@@ -250,7 +252,7 @@ public class MainServiceImpl implements MainService {
 
                 trainSearchResponseList.add(new TrainSearchResponse(
                         train.getTrainClass(), train.getTrainName(), train.getStartStation(), train.getLastStation(),
-                        fromStation.getName(), toStation.getName(), departure.toString(), arrival.toString(), seatAvailability, fareInformation
+                        fromStation.getName(), toStation.getName(), departure, arrival, seatAvailability, fareInformation
                 ));
 
                 if (trainSearchResponseList.size() >= 10) {
@@ -338,5 +340,115 @@ public class MainServiceImpl implements MainService {
 
         Double fare = distFare * selectedFare.getFareMultiplier();
         return fare.intValue();
+    }
+
+    /*;
+       指定した列車の座席列挙;
+       GET /train/seats?date=2020-03-01&train_class=のぞみ&train_name=96号&car_number=2&from=大阪&to=東京;
+   */
+    @Override
+    public CarInformation trainSeatsHandler(ZonedDateTime use_at,
+                                            String trainClass,
+                                            String trainName,
+                                            int carNumber,
+                                            String fromName,
+                                            String toName) {
+
+        ZonedDateTime date = use_at.withZoneSameInstant(ZoneOffset.ofHours(9));
+
+        if (!Utils.checkAvailableDate(date)) {
+            throw new IsuconException("予約可能期間外です", HttpStatus.NOT_FOUND);
+        }
+
+        // 対象列車の取得;
+        TrainMaster train = trainMasterDao.selectByDateClassName(date.toLocalDate(), trainClass, trainName);
+        if (train == null) {
+            throw new IsuconException("列車が存在しません", HttpStatus.NOT_FOUND);
+        }
+
+        StationMaster fromStation = stationMasterDao.selectByName(fromName);
+        if (fromStation == null) {
+            throw new IsuconException("fromStation: no rows", HttpStatus.BAD_REQUEST);
+        }
+
+        StationMaster toStation = stationMasterDao.selectByName(toName);
+        if (toStation == null) {
+            throw new IsuconException("ToStation: no rows", HttpStatus.BAD_REQUEST);
+        }
+
+        List<String> usableTrainClassList = Utils.getUsableTrainClassList(fromStation, toStation);
+        boolean usable = usableTrainClassList.stream().anyMatch(it -> Objects.equals(it, trainClass));
+        if (!usable) {
+            throw new IsuconException("invalid train_class", HttpStatus.BAD_REQUEST);
+        }
+
+        List<SeatMaster> seatList = seatMasterDao.selectByClassNumber(trainClass, carNumber);
+
+        List<SeatInformation> seatInformationList = new ArrayList<>();
+        for (SeatMaster seat : seatList) {
+            SeatInformation s = new SeatInformation(seat.getSeatRow(), seat.getSeatColumn(), seat.getSeatClass(), seat.getIsSmokingSeat(), false);
+            List<SeatReservations> seatReservationList = seatReservationsDao.selectSeatReservationList(
+                    date.toLocalDate(),
+                    seat.getTrainClass(),
+                    trainName,
+                    seat.getCarNumber(),
+                    seat.getSeatRow(),
+                    seat.getSeatColumn()
+            );
+            log.info(seatReservationList.toString());
+
+            for (SeatReservations seatReservation : seatReservationList) {
+                Reservations reservation = reservationsDao.selectById(seatReservation.getReservationId());
+
+                StationMaster departureStation = stationMasterDao.selectByName(reservation.getDeparture());
+                if (fromStation == null) {
+                    throw new IsuconException("reservation departureStation: no row", HttpStatus.BAD_REQUEST);
+                }
+
+                StationMaster arrivalStation = stationMasterDao.selectByName(reservation.getArrival());
+                if (toStation == null) {
+                    throw new IsuconException("reservation arrivalStation: no row", HttpStatus.BAD_REQUEST);
+                }
+
+                if (train.getIsNobori()) {
+                    // 上り;
+                    if (toStation.getId() < arrivalStation.getId() && fromStation.getId() <= arrivalStation.getId()) {
+                        // pass;
+                    } else if (toStation.getId() >= departureStation.getId() && fromStation.getId() > departureStation.getId()) {
+                        // pass;
+                    } else {
+                        s.setIsOccupied(true);
+                    }
+                } else {
+                    // 下り;
+                    if (fromStation.getId() < departureStation.getId() && toStation.getId() <= departureStation.getId()) {
+                        // pass;
+                    } else if (fromStation.getId() >= arrivalStation.getId() && toStation.getId() > arrivalStation.getId()) {
+                        // pass;
+                    } else {
+                        s.setIsOccupied(true);
+                    }
+                }
+            }
+            log.info("{}", s.getIsOccupied());
+            seatInformationList.add(s);
+        }
+        // 各号車の情報;
+        List<SimpleCarInformation> simpleCarInformationList = new ArrayList<>();
+
+        int i = 1;
+        for (; ; i++) {
+            SeatMaster seat = seatMasterDao.selectOneByClassNumber(trainClass, i);
+            if (seat == null) {
+                break;
+            }
+
+            simpleCarInformationList.add(new SimpleCarInformation(i, seat.getSeatClass()));
+        }
+
+        CarInformation c = new CarInformation(date.toLocalDate(), trainClass, trainName,
+                carNumber, seatInformationList, simpleCarInformationList);
+
+        return c;
     }
 }
