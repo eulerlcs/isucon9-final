@@ -56,7 +56,7 @@ curl http://127.0.0.1:8000/api/stations
 ### /api/train/search
 
 ```
-######## /train/search?use_at=<ISO8601形式の時刻>&from=東京&to=大阪&adult=3&child=1
+######## /api/train/search?use_at=<ISO8601形式の時刻>&from=東京&to=大阪&adult=3&child=1
 curl "http://127.0.0.1:8000/api/train/search?use_at=2020-01-01T21:10:00.000Z&from=%E6%9D%B1%E4%BA%AC&to=%E5%A4%A7%E9%98%AA&train_class=%E6%9C%80%E9%80%9F&adult=3&child=1"
 [
     {
@@ -85,6 +85,14 @@ curl "http://127.0.0.1:8000/api/train/search?use_at=2020-01-01T21:10:00.000Z&fro
     },
     ### 他の９件省略
 ]
+```
+
+### api/train/seats
+
+```
+######## /api/train/seats?date=<ISO8601形式の時刻>&from=東京&to=大阪&train_class=最速&train_name=1&car_number=4
+
+curl "http://127.0.0.1:8000/api/train/seats?date=2019-12-31T15:00:00.000Z&train_class=%E6%9C%80%E9%80%9F&train_name=1&car_number=4&from=%E6%9D%B1%E4%BA%AC&to=%E5%A4%A7%E9%98%AA"
 ```
 
 

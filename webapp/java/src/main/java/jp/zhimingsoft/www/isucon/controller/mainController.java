@@ -1,9 +1,6 @@
 package jp.zhimingsoft.www.isucon.controller;
 
-import jp.zhimingsoft.www.isucon.domain.InitializeResponse;
-import jp.zhimingsoft.www.isucon.domain.Settings;
-import jp.zhimingsoft.www.isucon.domain.StationMaster;
-import jp.zhimingsoft.www.isucon.domain.TrainSearchResponse;
+import jp.zhimingsoft.www.isucon.domain.*;
 import jp.zhimingsoft.www.isucon.service.MainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +50,15 @@ public class mainController {
     }
 
     @GetMapping("/api/train/seats")
-    public String trainSeatsHandler() {
-        return "/api/train/seats";
+    public CarInformation trainSeatsHandler(
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime date,
+            @RequestParam(name = "train_class") String trainClass,
+            @RequestParam(name = "train_name") String trainName,
+            @RequestParam(name = "car_number") Integer carNumber,
+            String from,
+            String to
+    ) {
+        return mainService.trainSeatsHandler(date, trainClass, trainName, carNumber, from, to);
     }
 
     @PostMapping("/api/train/reserve")

@@ -27,6 +27,9 @@ public interface TrainMasterDao {
     @SelectProvider(type = SqlProvider.class)
     List<TrainMaster> selectByDateClassNobori(LocalDate date, @Param("train_class") List<String> trainClassList, @Param("is_nobori") boolean isNobori);
 
+    @SelectProvider(type = SqlProvider.class)
+    TrainMaster selectByDateClassName(LocalDate date, String train_class, String train_name);
+
     class SqlProvider implements ProviderMethodResolver {
         public static final String TABLE_NAME = "train_master";
 
@@ -34,9 +37,19 @@ public interface TrainMasterDao {
             return new SQL() {{
                 SELECT("*");
                 FROM(TABLE_NAME);
-                WHERE("date = #{date} ");
+                WHERE("date = #{date}");
                 WHERE("train_class in (" + DbUtils.getInPhraseParamString("train_class", trainClassList) + ")");
                 WHERE("is_nobori = #{is_nobori} ");
+            }}.toString();
+        }
+
+        public static String selectByDateClassName() {
+            return new SQL() {{
+                SELECT("*");
+                FROM(TABLE_NAME);
+                WHERE("date = #{date}");
+                WHERE("train_class = #{train_class}");
+                WHERE("train_name = #{train_name} ");
             }}.toString();
         }
     }
