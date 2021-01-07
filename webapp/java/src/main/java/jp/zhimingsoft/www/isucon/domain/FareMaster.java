@@ -1,17 +1,19 @@
 package jp.zhimingsoft.www.isucon.domain;
 
-import java.io.Serializable;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * Table: fare_master
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class FareMaster implements Serializable {
     /**
      * Column: train_class
@@ -29,7 +31,7 @@ public class FareMaster implements Serializable {
      * Column: start_date
      */
     @JsonProperty("start_date")
-    private Date startDate;
+    private LocalDate startDate;
 
     /**
      * Column: fare_multiplier

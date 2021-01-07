@@ -5,7 +5,6 @@ import jp.zhimingsoft.www.isucon.domain.StationMaster;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 public class Utils {
     public static final int AVAILABLE_DAYS = 10;
@@ -24,33 +23,33 @@ public class Utils {
     }
 
 
-    public static List<String> getUsableTrainClassList(StationMaster fromStation , StationMaster toStation ) {
-        Map<String, String>  usable =new HashMap<String,String>();
+    public static List<String> getUsableTrainClassList(StationMaster fromStation, StationMaster toStation) {
+        Map<String, String> usable = new HashMap<String, String>();
 
-        for (Map.Entry<String, String> entry: TrainClassMap.entrySet() ){
-             usable.put(entry.getKey(),entry.getValue());
+        for (Map.Entry<String, String> entry : TrainClassMap.entrySet()) {
+            usable.put(entry.getKey(), entry.getValue());
         }
 
         if (!fromStation.getIsStopExpress()) {
-            usable.remove( "express");
+            usable.remove("express");
         }
         if (!fromStation.getIsStopSemiExpress()) {
-            usable.remove( "semi_express");
+            usable.remove("semi_express");
         }
         if (!fromStation.getIsStopLocal()) {
-            usable.remove(  "local");
+            usable.remove("local");
         }
 
         if (!toStation.getIsStopExpress()) {
-            usable.remove(  "express");
+            usable.remove("express");
         }
         if (!toStation.getIsStopSemiExpress()) {
-            usable.remove(  "semi_express");
+            usable.remove("semi_express");
         }
-        if (!toStation.getIsStopLocal ()) {
-            usable.remove(  "local");
+        if (!toStation.getIsStopLocal()) {
+            usable.remove("local");
         }
 
-        return new ArrayList<>( usable.values());
+        return new ArrayList<>(usable.values());
     }
 }

@@ -1,8 +1,9 @@
 package jp.zhimingsoft.www.isucon.dao;
 
-import java.util.List;
 import jp.zhimingsoft.www.isucon.domain.Reservations;
 import org.apache.ibatis.annotations.Delete;
+
+import java.util.List;
 
 public interface ReservationsDao {
 

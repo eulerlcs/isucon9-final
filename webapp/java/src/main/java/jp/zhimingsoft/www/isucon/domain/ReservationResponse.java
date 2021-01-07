@@ -1,15 +1,17 @@
 package jp.zhimingsoft.www.isucon.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class ReservationResponse implements Serializable {
     /**
      * Column: reservation_id
@@ -19,7 +21,7 @@ public class ReservationResponse implements Serializable {
     /**
      * Column: date
      */
-    private Date date;
+    private LocalDate date;
 
     /**
      * Column: train_class

@@ -1,24 +1,20 @@
 package jp.zhimingsoft.www.isucon.controller;
 
-import jp.zhimingsoft.www.isucon.dao.ReservationsDao;
-import jp.zhimingsoft.www.isucon.dao.SeatReservationsDao;
-import jp.zhimingsoft.www.isucon.dao.StationMasterDao;
-import jp.zhimingsoft.www.isucon.dao.UsersDao;
-import jp.zhimingsoft.www.isucon.domain.*;
-import jp.zhimingsoft.www.isucon.exception.IsuconException;
+import jp.zhimingsoft.www.isucon.domain.InitializeResponse;
+import jp.zhimingsoft.www.isucon.domain.Settings;
+import jp.zhimingsoft.www.isucon.domain.StationMaster;
+import jp.zhimingsoft.www.isucon.domain.TrainSearchResponse;
 import jp.zhimingsoft.www.isucon.service.MainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
-import jp.zhimingsoft.www.isucon.utils.Utils;
 
 @RestController
 @Slf4j

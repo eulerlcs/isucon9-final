@@ -1,13 +1,12 @@
 package jp.zhimingsoft.www.isucon.dao;
 
-import java.util.List;
-
 import jp.zhimingsoft.www.isucon.domain.SeatReservations;
 import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.builder.annotation.ProviderMethodResolver;
 import org.apache.ibatis.jdbc.SQL;
+
+import java.util.List;
 
 public interface SeatReservationsDao {
     public static final String TABLE_NAME = "seat_reservations";

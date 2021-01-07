@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.util.*;
@@ -28,26 +27,28 @@ public class MainServiceImpl implements MainService {
     private StationMasterDao stationMasterDao;
     @Autowired
     private TrainMasterDao trainMasterDao;
-
     @Autowired
     private TrainTimetableMasterDao trainTimetableMasterDao;
-
     @Autowired
     private SeatMasterDao seatMasterDao;
 
+    @Autowired
+    private DistanceFareMasterDao distanceFareMasterDao;
+    @Autowired
+    private FareMasterDao fareMasterDao;
+
+    /*
+         initialize
+     */
     @Override
     public InitializeResponse initializeHandler() {
-        /*
-            initialize
-        */
-
         seatReservationsDao.truncate();
         reservationsDao.truncate();
         usersDao.truncate();
 
         InitializeResponse initializeResponse = new InitializeResponse();
 
-        initializeResponse.setLanguage("golang");
+        initializeResponse.setLanguage("java");
         initializeResponse.setAvailableDays(Utils.AVAILABLE_DAYS);
 
         return initializeResponse;
@@ -65,11 +66,20 @@ public class MainServiceImpl implements MainService {
 
     @Override
     public List<StationMaster> getStationsHandler() {
-        List<StationMaster> list = stationMasterDao.selectAllByDistanceAsc();
+        List<StationMaster> list = stationMasterDao.selectOrderByDistance(false);
 
         return list;
     }
 
+    /*
+         列車検索
+             GET /train/search?use_at=<ISO8601形式の時刻> & from=東京 & to=大阪
+
+         return
+             料金
+             空席情報
+             発駅と着駅の到着時刻
+     */
     @Override
     public List<TrainSearchResponse> trainSearchHandler(
             ZonedDateTime use_at,
@@ -78,17 +88,6 @@ public class MainServiceImpl implements MainService {
             String to,
             Integer adult,
             Integer child) {
-
-        /*
-            列車検索
-                GET /train/search?use_at=<ISO8601形式の時刻> & from=東京 & to=大阪
-
-            return
-                料金
-                空席情報
-                発駅と着駅の到着時刻
-
-        */
 
         if (!Utils.checkAvailableDate(use_at)) {
             throw new IsuconException("予約可能期間外です", HttpStatus.NOT_FOUND);
@@ -114,12 +113,11 @@ public class MainServiceImpl implements MainService {
             isNobori = true;
         }
 
-
         List<StationMaster> stations = null;
         if (isNobori) {
-            stations = stationMasterDao.selectAllByDistanceDesc();
+            stations = stationMasterDao.selectOrderByDistance(true);
         } else {
-            stations = stationMasterDao.selectAllByDistanceAsc();
+            stations = stationMasterDao.selectOrderByDistance(false);
         }
 
         List<String> usableTrainClassList = null;
@@ -179,13 +177,11 @@ public class MainServiceImpl implements MainService {
                 // 列車情報;
 
                 // 所要時間;
-                LocalTime departure, arrival;
-
                 TrainTimetableMaster trainTimetableMaster = trainTimetableMasterDao.selectOne(date.toLocalDate(), train.getTrainClass(), train.getTrainName(), fromStation.getName());
-                departure = trainTimetableMaster.getDeparture();
+                LocalTime departure = trainTimetableMaster.getDeparture();
 
                 trainTimetableMaster = trainTimetableMasterDao.selectOne(date.toLocalDate(), train.getTrainClass(), train.getTrainName(), toStation.getName());
-                arrival = trainTimetableMaster.getArrival();
+                LocalTime arrival = trainTimetableMaster.getArrival();
 
                 if (!date.toLocalTime().isBefore(departure)) {
                     // 乗りたい時刻より出発時刻が前なので除外;
@@ -193,13 +189,9 @@ public class MainServiceImpl implements MainService {
                 }
 
                 List<SeatMaster> premium_avail_seats = getAvailableSeats(train, fromStation, toStation, "premium", false);
-
                 List<SeatMaster> premium_smoke_avail_seats = getAvailableSeats(train, fromStation, toStation, "premium", true);
-
                 List<SeatMaster> reserved_avail_seats = getAvailableSeats(train, fromStation, toStation, "reserved", false);
-
                 List<SeatMaster> reserved_smoke_avail_seats = getAvailableSeats(train, fromStation, toStation, "reserved", true);
-
 
                 String premium_avail = "○";
                 if (premium_avail_seats == null || premium_avail_seats.size() == 0) {
@@ -239,13 +231,13 @@ public class MainServiceImpl implements MainService {
                 );
 
                 // 料金計算;
-                int premiumFare = fareCalc(date.toLocalTime(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "premium");
+                int premiumFare = fareCalc(date.toLocalDate(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "premium");
                 premiumFare = premiumFare * adult + premiumFare / 2 * child;
 
-                int reservedFare = fareCalc(date.toLocalTime(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "reserved");
+                int reservedFare = fareCalc(date.toLocalDate(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "reserved");
                 reservedFare = reservedFare * adult + reservedFare / 2 * child;
 
-                int nonReservedFare = fareCalc(date.toLocalTime(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "non-reserved");
+                int nonReservedFare = fareCalc(date.toLocalDate(), fromStation.getId(), toStation.getId(), train.getTrainClass(), "non-reserved");
                 nonReservedFare = nonReservedFare * adult + nonReservedFare / 2 * child;
 
                 Map<String, Integer> fareInformation = Map.of(
@@ -264,10 +256,8 @@ public class MainServiceImpl implements MainService {
                 if (trainSearchResponseList.size() >= 10) {
                     break;
                 }
-
             }
         }
-
 
         if (trainSearchResponseList == null || trainSearchResponseList.size() == 0) {
             throw new IsuconException("sql: no rows in result set", HttpStatus.BAD_REQUEST);
@@ -276,9 +266,8 @@ public class MainServiceImpl implements MainService {
         return trainSearchResponseList;
     }
 
+    // 指定種別の空き座席を返す
     private List<SeatMaster> getAvailableSeats(TrainMaster train, StationMaster fromStation, StationMaster toStation, String seatClass, boolean isSmokingSeat) {
-        // 指定種別の空き座席を返す
-
         // 全ての座席を取得する
         List<SeatMaster> seatList = seatMasterDao.selectSeatList(train.getTrainClass(), seatClass, isSmokingSeat);
 
@@ -299,71 +288,55 @@ public class MainServiceImpl implements MainService {
         return new ArrayList<>(availableSeatMap.values());
     }
 
+    private int getDistanceFare(double origToDestDistance) {
+        List<DistanceFareMaster> distanceFareList = distanceFareMasterDao.selectOrderByDistance();
 
-    private int fareCalc(LocalTime date, Long depStation, Long destStation, String trainClass, String seatClass) {
-        //;
-        // 料金計算メモ;
-        // 距離運賃(円) * 期間倍率(繁忙期なら2倍等) * 車両クラス倍率(急行・各停等) * 座席クラス倍率(プレミアム・指定席・自由席);
-        //;
+        double lastDistance = 0.0;
+        int lastFare = 0;
+        for (DistanceFareMaster distanceFare : distanceFareList) {
+            log.info("{} {} {}", origToDestDistance, distanceFare.getDistance(), distanceFare.getFare());
 
+            if (lastDistance < origToDestDistance && origToDestDistance < distanceFare.getDistance()) {
+                break;
+            }
 
-        StationMaster fromStation, toStation;
-
-      /*
-        query = "SELECT * FROM station_master WHERE id=?";
-
-        // From;
-        err = dbx.Get(&fromStation, query, depStation);
-        if (err == sql.ErrNoRows ) {
-            return 0, err;
-        }
-        if (err != nil ) {
-            return 0, err;
+            lastDistance = distanceFare.getDistance();
+            lastFare = distanceFare.getFare();
         }
 
-        // To;
-        err = dbx.Get(&toStation, query, destStation);
-        if (err == sql.ErrNoRows ) {
-            return 0, err;
-        }
-        if (err != nil ) {
-            log.Print(err);
-            return 0, err;
-        }
+        return lastFare;
+    }
 
-        log.info("distance", math.Abs(toStation.Distance-fromStation.Distance));
-        distFare, err = getDistanceFare(math.Abs(toStation.Distance - fromStation.Distance));
-        if (err != nil ) {
-            return 0, err;
-        }
-        log.info("distFare", distFare);
+    //;
+    // 料金計算メモ;
+    // 距離運賃(円) * 期間倍率(繁忙期なら2倍等) * 車両クラス倍率(急行・各停等) * 座席クラス倍率(プレミアム・指定席・自由席);
+    //;
+    private int fareCalc(LocalDate date, Long depStation, Long destStation, String trainClass, String seatClass) {
+        StationMaster fromStation = stationMasterDao.selectById(depStation);
+        StationMaster toStation = stationMasterDao.selectById(destStation);
+        log.info("distance {}", Math.abs(toStation.getDistance() - fromStation.getDistance()));
+
+        int distFare = getDistanceFare(Math.abs(toStation.getDistance() - fromStation.getDistance()));
+        log.info("distFare {}", distFare);
 
         // 期間・車両・座席クラス倍率;
-        fareList = []Fare{};
-        query = "SELECT * FROM fare_master WHERE train_class=? AND seat_class=? ORDER BY start_date";
-        err = dbx.Select(&fareList, query, trainClass, seatClass);
-        if (err != nil ) {
-            return 0, err;
+        List<FareMaster> fareList = fareMasterDao.selectByTrainSeat(trainClass, seatClass);
+        if (fareList == null || fareList.size() == 0) {
+            log.error("fare_master does not exists");
+            return 0;
         }
 
-        if (len(fareList) == 0 ) {
-            return 0, fmt.Errorf("fare_master does not exists");
-        }
-
-        selectedFare = fareList[0];
-        date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC);
-        for _, fare = range fareList {
-            if (!date.Before(fare.StartDate) ) {
-                log.info(fare.StartDate, fare.FareMultiplier);
+        FareMaster selectedFare = fareList.get(0);
+        for (FareMaster fare : fareList) {
+            if (!date.isBefore(fare.getStartDate())) {
+                log.info("{} {}", fare.getStartDate(), fare.getFareMultiplier());
                 selectedFare = fare;
             }
         }
 
         log.info("%%%%%%%%%%%%%%%%%%%");
 
-        return int(float64(distFare) * selectedFare.FareMultiplier), nil;
-    };
-*/
-        return 9999;
+        Double fare = distFare * selectedFare.getFareMultiplier();
+        return fare.intValue();
     }
 }
