@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface TrainMasterDao {
+    public static final String TABLE_NAME = "train_master";
+
     @Results(id = "self",
             value = {
                     @Result(property = "date", column = "date"),
@@ -31,8 +33,6 @@ public interface TrainMasterDao {
     TrainMaster selectByDateClassName(LocalDate date, String train_class, String train_name);
 
     class SqlProvider implements ProviderMethodResolver {
-        public static final String TABLE_NAME = "train_master";
-
         public static String selectByDateClassNobori(@Param("train_class") List<String> trainClassList) {
             return new SQL() {{
                 SELECT("*");
@@ -50,6 +50,12 @@ public interface TrainMasterDao {
                 WHERE("date = #{date}");
                 WHERE("train_class = #{train_class}");
                 WHERE("train_name = #{train_name} ");
+            }}.toString();
+        }
+
+        public static String ss() {
+            return new SQL() {{
+                // 	query = "SELECT * FROM train_master WHERE date=? AND train_class=? AND train_name=?";
             }}.toString();
         }
     }

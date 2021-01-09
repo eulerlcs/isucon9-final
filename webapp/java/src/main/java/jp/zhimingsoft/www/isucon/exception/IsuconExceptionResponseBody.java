@@ -13,23 +13,19 @@ import java.time.ZonedDateTime;
 public class IsuconExceptionResponseBody {
 
     @JsonProperty("is_error")
-    private Boolean isError;
+    private boolean isError;
     @JsonProperty("message")
     private String message;
 
     @JsonIgnore
-    // @JsonProperty("timestamp")
     private ZonedDateTime exceptionOccurrenceTime;
 
     @JsonIgnore
-    // @JsonProperty("status")
     private int status;
 
     @JsonIgnore
-    // @JsonProperty("error")
-    private String error;
+    private String errorMessage;
 
     @JsonIgnore
-    // @JsonProperty("path")
     private String path;
 }

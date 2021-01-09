@@ -34,11 +34,11 @@ public class IsuconExceptionHandler extends ResponseEntityExceptionHandler {
         String uri = ((ServletWebRequest) request).getRequest().getRequestURI();
 
         isuconExceptionResponseBody.setStatus(exception.getHttpStatus().value());
-        isuconExceptionResponseBody.setIsError(exception.getIsError());
+        isuconExceptionResponseBody.setError(exception.isError());
         isuconExceptionResponseBody.setMessage(exception.getMessage());
 
         isuconExceptionResponseBody.setExceptionOccurrenceTime(ZonedDateTime.now());
-        isuconExceptionResponseBody.setError(responseErrorMessage);
+        isuconExceptionResponseBody.setErrorMessage(responseErrorMessage);
         isuconExceptionResponseBody.setPath(uri);
 
         return isuconExceptionResponseBody;

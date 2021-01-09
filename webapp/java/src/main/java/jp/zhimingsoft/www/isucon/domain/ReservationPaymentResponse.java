@@ -11,5 +11,5 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class ReservationPaymentResponse implements Serializable {
 
-    private Boolean isOk;
+    private boolean isOk;
 }

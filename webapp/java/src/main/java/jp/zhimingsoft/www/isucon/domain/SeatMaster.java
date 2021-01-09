@@ -41,5 +41,5 @@ public class SeatMaster implements Serializable {
     /**
      * Column: is_smoking_seat
      */
-    private Boolean isSmokingSeat;
+    private boolean isSmokingSeat;
 }

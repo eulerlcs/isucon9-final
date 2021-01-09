@@ -49,5 +49,5 @@ public class TrainMaster implements Serializable {
     /**
      * Column: is_nobori
      */
-    private Boolean isNobori;
+    private boolean isNobori;
 }

@@ -14,5 +14,5 @@ public class TrainReservationResponse implements Serializable {
 
     private Integer amount;
 
-    private Boolean isOk;
+    private boolean isOk;
 }

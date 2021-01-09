@@ -2,6 +2,8 @@ package jp.zhimingsoft.www.isucon.dao;
 
 import jp.zhimingsoft.www.isucon.domain.SeatReservations;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.builder.annotation.ProviderMethodResolver;
 import org.apache.ibatis.jdbc.SQL;
@@ -20,6 +22,15 @@ public interface SeatReservationsDao {
 
     @SelectProvider(sqlProvider.class)
     List<SeatReservations> selectSeatReservationList(LocalDate date, String train_class, String train_name, Integer car_number, Integer seat_row, String seat_column);
+
+    @SelectProvider(sqlProvider.class)
+    List<SeatReservations> selectSeatReservationListForUpdate(LocalDate date, String train_class, String train_name, Integer car_number, Integer seat_row, String seat_column);
+
+    @Select("SELECT * FROM seat_reservations WHERE reservation_id = #{reservation_id} FOR UPDATE")
+    List<SeatReservations> selectByIdForUpdate(long reservation_id);
+
+    @Insert("INSERT INTO seat_reservations (reservation_id, car_number, seat_row, seat_column) VALUES (#{reservation_id}, #{car_number}, #{seat_row}, #{seat_column})")
+    int insert(SeatReservations seatReservations);
 
 
     class sqlProvider implements ProviderMethodResolver {
@@ -54,6 +65,19 @@ public interface SeatReservationsDao {
                 WHERE("seat_row = #{seat_row}");
                 WHERE("seat_column = #{seat_column}");
             }}.toString();
+        }
+
+        public String selectSeatReservationListForUpdate() {
+            return new SQL() {{
+                SELECT("s.*");
+                FROM("seat_reservations s, reservations r");
+                WHERE("r.date = #{date}");
+                WHERE("r.train_class = #{train_class}");
+                WHERE("r.train_name = #{train_name}");
+                WHERE("car_number = #{car_number}");
+                WHERE("seat_row = #{seat_row}");
+                WHERE("seat_column = #{seat_column}");
+            }}.toString() + " FOR UPDATE";
         }
     }
 }

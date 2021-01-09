@@ -2,44 +2,19 @@ package jp.zhimingsoft.www.isucon.dao;
 
 import jp.zhimingsoft.www.isucon.domain.Users;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Select;
 
 public interface UsersDao {
+    public static final String TABLE_NAME = "train_master";
 
     @Delete("truncate users")
     void truncate();
 
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
-    int deleteByPrimaryKey(Long id);
+    @Select("SELECT * FROM users WHERE id = #{id}")
+    Users selectById(Long id);
 
     /**
      * @mbg.generated generated automatically, do not modify!
      */
     int insert(Users record);
-
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
-    int insertSelective(Users record);
-
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
-    Users selectByPrimaryKey(Long id);
-
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
-    int updateByPrimaryKeySelective(Users record);
-
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
-    int updateByPrimaryKeyWithBLOBs(Users record);
-
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
-    int updateByPrimaryKey(Users record);
 }

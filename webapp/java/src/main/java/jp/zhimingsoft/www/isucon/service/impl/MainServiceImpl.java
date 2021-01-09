@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -280,7 +281,7 @@ public class MainServiceImpl implements MainService {
         }
 
         // すでに取られている予約を取得する
-        List<SeatReservations> seatReservationList = seatReservationsDao.selectReservedSeatList(train.getIsNobori(), fromStation.getId(), toStation.getId());
+        List<SeatReservations> seatReservationList = seatReservationsDao.selectReservedSeatList(train.isNobori(), fromStation.getId(), toStation.getId());
 
         for (SeatReservations seatReservation : seatReservationList) {
             String key = seatReservation.getCarNumber() + "_" + seatReservation.getSeatRow() + "_" + seatReservation.getSeatColumn();
@@ -309,10 +310,10 @@ public class MainServiceImpl implements MainService {
         return lastFare;
     }
 
-    //;
-    // 料金計算メモ;
-    // 距離運賃(円) * 期間倍率(繁忙期なら2倍等) * 車両クラス倍率(急行・各停等) * 座席クラス倍率(プレミアム・指定席・自由席);
-    //;
+    //
+    // 料金計算メモ
+    // 距離運賃(円) * 期間倍率(繁忙期なら2倍等) * 車両クラス倍率(急行・各停等) * 座席クラス倍率(プレミアム・指定席・自由席)
+    //
     private int fareCalc(LocalDate date, Long depStation, Long destStation, String trainClass, String seatClass) {
         StationMaster fromStation = stationMasterDao.selectById(depStation);
         StationMaster toStation = stationMasterDao.selectById(destStation);
@@ -342,9 +343,9 @@ public class MainServiceImpl implements MainService {
         return fare.intValue();
     }
 
-    /*;
-       指定した列車の座席列挙;
-       GET /train/seats?date=2020-03-01&train_class=のぞみ&train_name=96号&car_number=2&from=大阪&to=東京;
+    /*
+       指定した列車の座席列挙
+       GET /train/seats?date=2020-03-01&train_class=のぞみ&train_name=96号&car_number=2&from=大阪&to=東京
    */
     @Override
     public CarInformation trainSeatsHandler(ZonedDateTime use_at,
@@ -386,7 +387,7 @@ public class MainServiceImpl implements MainService {
 
         List<SeatInformation> seatInformationList = new ArrayList<>();
         for (SeatMaster seat : seatList) {
-            SeatInformation s = new SeatInformation(seat.getSeatRow(), seat.getSeatColumn(), seat.getSeatClass(), seat.getIsSmokingSeat(), false);
+            SeatInformation s = new SeatInformation(seat.getSeatRow(), seat.getSeatColumn(), seat.getSeatClass(), seat.isSmokingSeat(), false);
             List<SeatReservations> seatReservationList = seatReservationsDao.selectSeatReservationList(
                     date.toLocalDate(),
                     seat.getTrainClass(),
@@ -410,14 +411,14 @@ public class MainServiceImpl implements MainService {
                     throw new IsuconException("reservation arrivalStation: no row", HttpStatus.BAD_REQUEST);
                 }
 
-                if (train.getIsNobori()) {
+                if (train.isNobori()) {
                     // 上り;
                     if (toStation.getId() < arrivalStation.getId() && fromStation.getId() <= arrivalStation.getId()) {
                         // pass;
                     } else if (toStation.getId() >= departureStation.getId() && fromStation.getId() > departureStation.getId()) {
                         // pass;
                     } else {
-                        s.setIsOccupied(true);
+                        s.setOccupied(true);
                     }
                 } else {
                     // 下り;
@@ -426,11 +427,11 @@ public class MainServiceImpl implements MainService {
                     } else if (fromStation.getId() >= arrivalStation.getId() && toStation.getId() > arrivalStation.getId()) {
                         // pass;
                     } else {
-                        s.setIsOccupied(true);
+                        s.setOccupied(true);
                     }
                 }
             }
-            log.info("{}", s.getIsOccupied());
+            log.info("{}", s.isOccupied());
             seatInformationList.add(s);
         }
         // 各号車の情報;
@@ -451,4 +452,466 @@ public class MainServiceImpl implements MainService {
 
         return c;
     }
+
+    /*
+		列車の席予約API　支払いはまだ;
+		POST /api/train/reserve;
+			{
+				"date": "2020-12-31T07:57:00+09:00",;
+				"train_name": "183",;
+				"train_class": "中間",;
+				"car_number": 7,;
+				"is_smoking_seat": false,;
+				"seat_class": "reserved",;
+				"departure": "東京",;
+				"arrival": "名古屋",;
+				"child": 2,;
+				"adult": 1,;
+				"column": "A",;
+				"seats": [;
+					{
+					"row": 3,;
+					"column": "B";
+					},;
+						{
+					"row": 4,;
+					"column": "C";
+					}
+				];
+		}
+		レスポンスで予約IDを返す;
+		reservationResponse(w http.ResponseWriter, errCode int, id int, ok bool, message string);
+	*/
+    @Override
+    @Transactional
+    public TrainReservationResponse trainReservationHandler(TrainReservationRequest req, Users user) {
+        // 乗車日の日付表記統一;
+        ZonedDateTime date = req.getDate().withZoneSameInstant(ZoneOffset.ofHours(9));
+        if (!Utils.checkAvailableDate(date)) {
+            throw new IsuconException("予約可能期間外です", HttpStatus.NOT_FOUND);
+        }
+
+        // 止まらない駅の予約を取ろうとしていないかチェックする;
+        // 列車データを取得;
+        TrainMaster tmas = trainMasterDao.selectByDateClassName(date.toLocalDate(), req.getTrainClass(), req.getTrainName());
+        if (tmas == null) {
+            throw new IsuconException("列車データがみつかりません", HttpStatus.NOT_FOUND);
+        }
+
+        // 列車自体の駅IDを求める;
+        // Departure;
+        StationMaster departureStation = stationMasterDao.selectByName(tmas.getStartStation());
+        if (departureStation == null) {
+            throw new IsuconException("リクエストされた列車の始発駅データがみつかりません", HttpStatus.NOT_FOUND);
+        }
+
+        // Arrive;
+        StationMaster arrivalStation = stationMasterDao.selectByName(tmas.getLastStation());
+        if (arrivalStation == null) {
+            throw new IsuconException("リクエストされた列車の終着駅データがみつかりません", HttpStatus.NOT_FOUND);
+        }
+
+        // リクエストされた乗車区間の駅IDを求める;
+        // From;
+        StationMaster fromStation = stationMasterDao.selectByName(req.getDeparture());
+        if (fromStation == null) {
+            throw new IsuconException("乗車駅データがみつかりません " + req.getDeparture(), HttpStatus.NOT_FOUND);
+        }
+
+        // To;
+        StationMaster toStation = stationMasterDao.selectByName(req.getArrival());
+        if (toStation == null) {
+            throw new IsuconException("降車駅データがみつかりません " + req.getArrival(), HttpStatus.NOT_FOUND);
+        }
+
+
+        switch (req.getTrainClass()) {
+            case "最速":
+                if (!fromStation.isStopExpress() || !toStation.isStopExpress()) {
+                    throw new IsuconException("最速の止まらない駅です", HttpStatus.BAD_REQUEST);
+                }
+                break;
+            case "中間":
+                if (!fromStation.isStopSemiExpress() || !toStation.isStopSemiExpress()) {
+                    throw new IsuconException("中間の止まらない駅です", HttpStatus.BAD_REQUEST);
+                }
+                break;
+            case "遅いやつ":
+                if (!fromStation.isStopLocal() || !toStation.isStopLocal()) {
+                    throw new IsuconException("遅いやつの止まらない駅です", HttpStatus.BAD_REQUEST);
+                }
+                break;
+            default:
+                throw new IsuconException("リクエストされた列車クラスが不明です", HttpStatus.BAD_REQUEST);
+        }
+
+
+        // 運行していない区間を予約していないかチェックする;
+        if (tmas.isNobori()) {
+            if (fromStation.getId() > departureStation.getId() || toStation.getId() > departureStation.getId()) {
+                throw new IsuconException("リクエストされた区間に列車が運行していない区間が含まれています", HttpStatus.BAD_REQUEST);
+            }
+            if (arrivalStation.getId() >= fromStation.getId() || arrivalStation.getId() > toStation.getId()) {
+                throw new IsuconException("リクエストされた区間に列車が運行していない区間が含まれています", HttpStatus.BAD_REQUEST);
+            }
+        } else {
+            if (fromStation.getId() < departureStation.getId() || toStation.getId() < departureStation.getId()) {
+                throw new IsuconException("リクエストされた区間に列車が運行していない区間が含まれています", HttpStatus.BAD_REQUEST);
+            }
+            if (arrivalStation.getId() <= fromStation.getId() || arrivalStation.getId() < toStation.getId()) {
+                throw new IsuconException("リクエストされた区間に列車が運行していない区間が含まれています", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        /*
+            あいまい座席検索;
+            seatsが空白の時に発動する;
+        */
+        switch (req.getSeats().size()) {
+            case 0:
+                ;
+                if (req.getSeatClass() == "non-reserved") {
+                    // non-reservedはそもそもあいまい検索もせずダミーのRow/Columnで予約を確定させる。
+                    break;
+                }
+                //当該列車・号車中の空き座席検索;
+                TrainMaster train = trainMasterDao.selectByDateClassName(date.toLocalDate(), req.getTrainClass(), req.getTrainName());
+                if (train == null) {
+                    throw new IsuconException("列車が存在しません", HttpStatus.NOT_FOUND);
+                }
+
+                List<String> usableTrainClassList = Utils.getUsableTrainClassList(fromStation, toStation);
+                boolean usable = usableTrainClassList.stream().anyMatch(it -> Objects.equals(it, train.getTrainClass()));
+
+                if (!usable) {
+                    throw new IsuconException("invalid train_class", HttpStatus.BAD_REQUEST);
+                }
+
+                // 座席リクエスト情報は空に
+                req.getSeats().clear();
+
+                for (int carnum = 1; carnum <= 16; carnum++) {
+                    List<SeatMaster> seatList = seatMasterDao.selectOne4(req.getTrainClass(), carnum, req.getSeatClass(), req.isSmokingSeat());
+                    if (seatList == null) {
+                        throw new IsuconException("error", HttpStatus.BAD_REQUEST);
+                    }
+
+                    List<SeatInformation> seatInformationList = new ArrayList<>();
+                    for (SeatMaster seat : seatList) {
+                        SeatInformation s = new SeatInformation(seat.getSeatRow(), seat.getSeatColumn(), seat.getSeatClass(), seat.isSmokingSeat(), false);
+                        List<SeatReservations> seatReservationList = seatReservationsDao.selectSeatReservationListForUpdate(
+                                date.toLocalDate(),
+                                seat.getTrainClass(),
+                                req.getTrainName(),
+                                seat.getCarNumber(),
+                                seat.getSeatRow(),
+                                seat.getSeatColumn()
+                        );
+
+
+                        if (seatReservationList == null) {
+                            throw new IsuconException("error", HttpStatus.BAD_REQUEST);
+                        }
+
+                        for (SeatReservations seatReservation : seatReservationList) {
+                            Reservations reservation = reservationsDao.selectByIdForUpdate(seatReservation.getReservationId());
+
+                            departureStation = stationMasterDao.selectByName(reservation.getDeparture());
+                            if (departureStation == null) {
+                                throw new IsuconException("error", HttpStatus.NOT_FOUND);
+                            }
+                            arrivalStation = stationMasterDao.selectByName(reservation.getDeparture());
+                            if (arrivalStation == null) {
+                                throw new IsuconException("error", HttpStatus.NOT_FOUND);
+                            }
+
+
+                            if (train.isNobori()) {
+                                // 上り
+                                if (toStation.getId() < arrivalStation.getId() && fromStation.getId() <= arrivalStation.getId()) {
+                                    // pass
+                                } else if (toStation.getId() >= departureStation.getId() && fromStation.getId() > departureStation.getId()) {
+                                    // pass
+                                } else {
+                                    s.setOccupied(true);
+                                }
+                            } else {
+                                // 下り
+                                if (fromStation.getId() < departureStation.getId() && toStation.getId() <= departureStation.getId()) {
+                                    // pass
+                                } else if (fromStation.getId() >= arrivalStation.getId() && toStation.getId() > arrivalStation.getId()) {
+                                    // pass
+                                } else {
+                                    s.setOccupied(true);
+                                }
+                            }
+
+                        }
+
+                        seatInformationList.add(s);
+                    }
+
+                    // 曖昧予約席とその他の候補席を選出;
+                    int seatnum;            // 予約する座席の合計数;
+                    boolean reserved;          // あいまい指定席確保済フラグ;
+                    boolean vargue;           // あいまい検索フラグ;
+                    RequestSeat VagueSeat = new RequestSeat(); // あいまい指定席保存用;
+                    reserved = false;
+                    vargue = true;
+                    seatnum = (req.getAdult() + req.getChild() - 1); // 全体の人数からあいまい指定席分を引いておく;
+                    if (req.getColumn() == "") {                 // A/B/C/D/Eを指定しなければ、空いている適当な指定席を取るあいまいモード;
+                        seatnum = req.getAdult() + req.getChild(); // あいまい指定せず大人＋小人分の座席を取る;
+                        reserved = true;                   // dummy;
+                        vargue = false;                    // dummy;
+                    }
+                    RequestSeat CandidateSeat = new RequestSeat();
+                    List<RequestSeat> CandidateSeats = new ArrayList<>();
+
+                    // シート分だけ回して予約できる席を検索;
+                    int i = 0;
+                    for (SeatInformation seat : seatInformationList) {
+                        if (seat.getColumn() == req.getColumn() && !seat.isOccupied() && !reserved && vargue) { // あいまい席があいてる;
+                            VagueSeat.setRow(seat.getRow());
+                            VagueSeat.setColumn(seat.getColumn());
+                            reserved = true;
+                        } else if (!seat.isOccupied() && i < seatnum) { // 単に席があいてる;
+                            CandidateSeat.setRow(seat.getRow());
+                            CandidateSeat.setColumn(seat.getColumn());
+                            CandidateSeats.add(CandidateSeat);
+                            i++;
+                        }
+                    }
+
+                    if (vargue && reserved) { // あいまい席が見つかり、予約できそうだった;
+                        req.getSeats().add(VagueSeat); // あいまい予約席を追加;
+                    }
+                    if (i > 0) { // 候補席があった;
+                        req.getSeats().addAll(CandidateSeats); // 予約候補席追加;
+                    }
+
+                    if (req.getSeats().size() < req.getAdult() + req.getChild()) {
+                        // リクエストに対して席数が足りてない;
+                        // 次の号車にうつしたい;
+                        log.info("-----------------");
+                        log.info("現在検索中の車両: {}号車, リクエスト座席数: {}, 予約できそうな座席数: {}, 不足数: {}", carnum, req.getAdult() + req.getChild(), req.getSeats().size(), req.getAdult() + req.getChild() - req.getSeats().size());
+                        log.info("リクエストに対して座席数が不足しているため、次の車両を検索します。");
+                        req.setSeats(new ArrayList<>());
+                        ;
+                        if (carnum == 16) {
+                            log.info("この新幹線にまとめて予約できる席数がなかったから検索をやめるよ");
+                            req.setSeats(new ArrayList<>());
+
+                            break;
+                        }
+                    }
+                    log.info("空き実績: {}号車 シート:{} 席数:{}\n", carnum, req.getSeats(), req.getSeats().size());
+                    if (req.getSeats().size() >= req.getAdult() + req.getChild()) {
+                        log.info("予約情報に追加したよ");
+                        req.setSeats(req.getSeats().subList(0, req.getAdult() + req.getChild()));
+                        req.setCarNumber(carnum);
+                        break;
+                    }
+                }
+                if (req.getSeats().size() == 0) {
+                    throw new IsuconException("あいまい座席予約ができませんでした。指定した席、もしくは1車両内に希望の席数をご用意できませんでした。", HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                // 座席情報のValidate;
+                SeatMaster seatList = null;
+                for (RequestSeat z : req.getSeats()) {
+                    log.info("XXXX", z);
+
+                    seatList = seatMasterDao.selectOne5(
+                            req.getTrainClass(),
+                            req.getCarNumber(),
+                            z.getColumn(),
+                            z.getRow(),
+                            req.getSeatClass()
+                    );
+                    if (seatList == null) {
+                        throw new IsuconException("リクエストされた座席情報は存在しません。号車・喫煙席・座席クラスなど組み合わせを見直してください", HttpStatus.NOT_FOUND);
+                    }
+                }
+
+                break;
+        }
+
+        // 当該列車・列車名の予約一覧取得;
+        List<Reservations> reservations = reservationsDao.selectByDateClassNameForUpdate(
+                date.toLocalDate(),
+                req.getTrainClass(),
+                req.getTrainName()
+        );
+        if (reservations == null) {
+            throw new IsuconException("列車予約情報の取得に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        for (Reservations reservation : reservations) {
+            if (req.getSeatClass() == "non-reserved") {
+                break;
+            }
+
+            // train_masterから列車情報を取得(上り・下りが分かる);
+            tmas = trainMasterDao.selectByDateClassName(date.toLocalDate(), req.getTrainClass(), req.getTrainName());
+            if (tmas == null) {
+                throw new IsuconException("列車データがみつかりません", HttpStatus.NOT_FOUND);
+            }
+
+            // 予約情報の乗車区間の駅IDを求める;
+            // From;
+            StationMaster reservedfromStation = stationMasterDao.selectByName(reservation.getDeparture());
+            if (reservedfromStation == null) {
+                throw new IsuconException("予約情報に記載された列車の乗車駅データがみつかりません", HttpStatus.NOT_FOUND);
+            }
+            // To;
+            StationMaster reservedtoStation = stationMasterDao.selectByName(reservation.getArrival());
+            if (reservedfromStation == null) {
+                throw new IsuconException("予約情報に記載された列車の降車駅データがみつかりません", HttpStatus.NOT_FOUND);
+            }
+
+            // 予約の区間重複判定;
+            boolean secdup = false;
+            if (tmas.isNobori()) {
+                // 上り;
+                if (toStation.getId() < reservedtoStation.getId() && fromStation.getId() <= reservedtoStation.getId()) {
+                    // pass;
+                } else if (toStation.getId() >= reservedfromStation.getId() && fromStation.getId() > reservedfromStation.getId()) {
+                    // pass;
+                } else {
+                    secdup = true;
+                }
+            } else {
+                // 下り;
+                if (fromStation.getId() < reservedfromStation.getId() && toStation.getId() <= reservedfromStation.getId()) {
+                    // pass;
+                } else if (fromStation.getId() >= reservedtoStation.getId() && toStation.getId() > reservedtoStation.getId()) {
+                    // pass;
+                } else {
+                    secdup = true;
+                }
+            }
+
+            if (secdup) {
+                // 区間重複の場合は更に座席の重複をチェックする;
+                List<SeatReservations> seatReservations = seatReservationsDao.selectByIdForUpdate(reservation.getReservationId());
+
+                if (seatReservations == null) {
+                    throw new IsuconException("座席予約情報の取得に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                for (SeatReservations v : seatReservations) {
+                    for (RequestSeat seat : req.getSeats()) {
+                        if (v.getCarNumber() == req.getCarNumber() && v.getSeatRow() == seat.getRow() && v.getSeatColumn() == seat.getColumn()) {
+                            log.info("Duplicated ", reservation);
+                            throw new IsuconException("リクエストに既に予約された席が含まれています", HttpStatus.BAD_REQUEST);
+                        }
+                    }
+                }
+            }
+        }
+        // 3段階の予約前チェック終わり;
+
+        // 自由席は強制的にSeats情報をダミーにする（自由席なのに席指定予約は不可）;
+        if (req.getSeatClass() == "non-reserved") {
+            req.setSeats(new ArrayList<RequestSeat>());
+            RequestSeat dummySeat = new RequestSeat();
+            req.setCarNumber(0);
+            for (int num = 0; num < req.getAdult() + req.getChild(); num++) {
+                dummySeat.setRow(0);
+                dummySeat.setColumn("");
+                req.getSeats().add(dummySeat);
+            }
+        }
+
+
+        // 運賃計算;
+        int fare;
+        switch (req.getSeatClass()) {
+            case "premium":
+                ;
+                fare = fareCalc(date.toLocalDate(), fromStation.getId(), toStation.getId(), req.getTrainClass(), "premium");
+                break;
+            case "reserved":
+                ;
+                fare = fareCalc(date.toLocalDate(), fromStation.getId(), toStation.getId(), req.getTrainClass(), "reserved");
+                break;
+            case "non-reserved":
+                ;
+                fare = fareCalc(date.toLocalDate(), fromStation.getId(), toStation.getId(), req.getTrainClass(), "non-reserved");
+                break;
+
+            default:
+                throw new IsuconException("リクエストされた座席クラスが不明です", HttpStatus.BAD_REQUEST);
+        }
+        int sumFare = (req.getAdult() * fare) + (req.getChild() * fare) / 2;
+        log.info("SUMFARE");
+
+        // userID取得。ログインしてないと怒られる。;
+        getUser(user);
+
+        //予約ID発行と予約情報登録;
+        Reservations result = new Reservations(
+                -1L,
+                user.getId(),
+                date.toLocalDate(),
+                req.getTrainClass(),
+                req.getTrainName(),
+                req.getDeparture(),
+                req.getArrival(),
+                "requesting",
+                "a",
+                req.getAdult(),
+                req.getChild(),
+                Long.valueOf(sumFare)
+        );
+        int ret = reservationsDao.insert(result);
+        if (ret != 1) {
+            throw new IsuconException("予約の保存に失敗しました。", HttpStatus.BAD_REQUEST);
+        }
+
+
+        Long id = result.getReservationId(); //予約ID;
+        if (id <= 0) {
+            throw new IsuconException("予約IDの取得に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        //席の予約情報登録
+        //reservationsレコード1に対してseat_reservationstが1以上登録される
+        for (RequestSeat v : req.getSeats()) {
+            SeatReservations seatReservations = new SeatReservations(id, req.getCarNumber(), v.getRow(), v.getColumn());
+            ret = seatReservationsDao.insert(seatReservations);
+            if (ret != 1) {
+                throw new IsuconException("座席予約の登録に失敗しました", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        TrainReservationResponse rr = new TrainReservationResponse(id, sumFare, true);
+        return rr;
+    }
+
+
+    private Users getUser(Users user) {
+        if (user == null || user.getId() == null) {
+            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
+        }
+
+        Users xx = usersDao.selectById(user.getId());
+        if (xx == null) {
+            throw new IsuconException("user not found", HttpStatus.UNAUTHORIZED);
+        }
+
+        return xx;
+    }
+
+    @Override
+    public AuthResponse getAuthHandler(Users user) {
+        // userID取得
+        getUser(user);
+
+        AuthResponse resp = new AuthResponse(user.getEmail());
+        return resp;
+    }
+
+
 }

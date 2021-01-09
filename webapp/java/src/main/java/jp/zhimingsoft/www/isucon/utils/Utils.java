@@ -30,23 +30,23 @@ public class Utils {
             usable.put(entry.getKey(), entry.getValue());
         }
 
-        if (!fromStation.getIsStopExpress()) {
+        if (!fromStation.isStopExpress()) {
             usable.remove("express");
         }
-        if (!fromStation.getIsStopSemiExpress()) {
+        if (!fromStation.isStopSemiExpress()) {
             usable.remove("semi_express");
         }
-        if (!fromStation.getIsStopLocal()) {
+        if (!fromStation.isStopLocal()) {
             usable.remove("local");
         }
 
-        if (!toStation.getIsStopExpress()) {
+        if (!toStation.isStopExpress()) {
             usable.remove("express");
         }
-        if (!toStation.getIsStopSemiExpress()) {
+        if (!toStation.isStopSemiExpress()) {
             usable.remove("semi_express");
         }
-        if (!toStation.getIsStopLocal()) {
+        if (!toStation.isStopLocal()) {
             usable.remove("local");
         }
 

@@ -14,5 +14,5 @@ public class PaymentResponse implements Serializable {
     private String paymentId;
 
 
-    private Boolean isOk;
+    private boolean isOk;
 }

@@ -34,15 +34,15 @@ public class StationMaster implements Serializable {
     /**
      * Column: is_stop_express
      */
-    private Boolean isStopExpress;
+    private boolean isStopExpress;
 
     /**
      * Column: is_stop_semi_express
      */
-    private Boolean isStopSemiExpress;
+    private boolean isStopSemiExpress;
 
     /**
      * Column: is_stop_local
      */
-    private Boolean isStopLocal;
+    private boolean isStopLocal;
 }

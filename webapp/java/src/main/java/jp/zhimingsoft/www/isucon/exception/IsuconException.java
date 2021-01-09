@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
  */
 @Getter
 public class IsuconException extends RuntimeException {
-    private Boolean isError;
+    private boolean isError;
     private HttpStatus httpStatus;
 
     public IsuconException(String message, HttpStatus httpStatus) {

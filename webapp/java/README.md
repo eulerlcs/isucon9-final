@@ -95,6 +95,82 @@ curl "http://127.0.0.1:8000/api/train/search?use_at=2020-01-01T21:10:00.000Z&fro
 curl "http://127.0.0.1:8000/api/train/seats?date=2019-12-31T15:00:00.000Z&train_class=%E6%9C%80%E9%80%9F&train_name=1&car_number=4&from=%E6%9D%B1%E4%BA%AC&to=%E5%A4%A7%E9%98%AA"
 ```
 
+### api/train/reserve
+
+```
+curl -X POST -H "Content-Type: application/json" -d @data-reserve-全条件指定.json  http://127.0.0.1:8000/api/train/reserve
+
+curl -X POST -H "Content-Type: application/json" -d @data-reserve-全条件非指定.json  http://127.0.0.1:8000/api/train/reserve
+
+{"is_error":true,"message":"no session"}
+```
+
+#### data-reserve-全条件指定.json     utf-8
+
+```json
+{"date":"2019-12-31T15:00:00.000Z","train_class":"最速","train_name":"1","car_number":4,"seat_class":"reserved","departure":"東京","arrival":"大阪","child":0,"adult":1,"column":"","seats":[{"row":1,"column":"E","class":"reserved","is_smoking_seat":false,"is_occupied":false,"text":"○","disabled":false,"selected":true}]}
+```
+
+#### all in one --  git bash OK,  cmd OK
+
+```
+curl -X POST -H "Content-Type: application/json" -d "{\"date\":\"2019-12-31T15:00:00.000Z\",\"train_class\":\"\u6700\u901f\",\"train_name\":\"1\",\"car_number\":4,\"seat_class\":\"reserved\",\"departure\":\"\u6771\u4eac\",\"arrival\":\"\u5927\u962a\",\"child\":0,\"adult\":1,\"column\":\"\",\"seats\":[{\"row\":1,\"column\":\"E\",\"class\":\"reserved\",\"is_smoking_seat\":false,\"is_occupied\":false,\"text\":\"\u25cb\",\"disabled\":false,\"selected\":true}]}" http://127.0.0.1:8000/api/train/reserve
+```
+
+#### all in one   -- git bash OK,  cmd NG
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000Z","train_class":"\u6700\u901f","train_name":"1","car_number":4,"seat_class":"reserved","departure":"\u6771\u4eac","arrival":"\u5927\u962a","child":0,"adult":1,"column":"","seats":[{"row":1,"column":"E","class":"reserved","is_smoking_seat":false,"is_occupied":false,"text":"\u25cb","disabled":false,"selected":true}]}' http://127.0.0.1:8000/api/train/reserve
+```
+
+
+
+
+
+### api/train/reservation/commit
+
+```
+
+```
+
+### api/auth
+
+```
+
+```
+### api/auth/signup
+
+```
+
+```
+### api/auth/login
+
+```
+
+```
+### api/auth/logout
+
+```
+
+```
+### api/user/reservations
+
+```
+
+```
+### api/user/reservations/:item_id
+
+```
+
+```
+### api/user/reservations/:item_id/cancel
+
+```
+
+```
+
+
+
 
 
 ## Author
