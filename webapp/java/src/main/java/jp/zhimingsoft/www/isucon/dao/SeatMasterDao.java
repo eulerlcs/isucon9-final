@@ -25,6 +25,9 @@ public interface SeatMasterDao {
     @SelectProvider(sqlProvider.class)
     SeatMaster selectOne5(String train_class, int car_number, String seat_column, Integer seat_row, String seat_class);
 
+    @SelectProvider(sqlProvider.class)
+    SeatMaster selectOne6(String train_class, int car_number, String seat_column, Integer seat_row);
+
     class sqlProvider implements ProviderMethodResolver {
         public String selectSeatList() {
             return new SQL() {{
@@ -78,6 +81,17 @@ public interface SeatMasterDao {
                 WHERE("seat_column = #{seat_column}");
                 WHERE("seat_row = #{seat_row}");
                 WHERE("seat_class = #{seat_class}");
+            }}.toString();
+        }
+
+        public String selectOne6() {
+            return new SQL() {{
+                SELECT("*");
+                FROM(TABLE_NAME);
+                WHERE("train_class = #{train_class}");
+                WHERE("car_number = #{car_number}");
+                WHERE("seat_column = #{seat_column}");
+                WHERE("seat_row = #{seat_row}");
             }}.toString();
         }
     }

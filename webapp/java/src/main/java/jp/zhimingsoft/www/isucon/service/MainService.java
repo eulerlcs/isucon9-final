@@ -95,4 +95,10 @@ public interface MainService {
         POST /auth/logout
     */
     void logoutHandler();
+
+    /*
+        予約取得
+        GET /user/reservations
+    */
+    List<ReservationResponse> userReservationsHandler();
 }

@@ -1,5 +1,6 @@
 package jp.zhimingsoft.www.isucon.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class ReservationResponse implements Serializable {
     /**
      * Column: date
      */
+    @JsonFormat(pattern = "yyyy/MM/dd")
     private LocalDate date;
 
     /**

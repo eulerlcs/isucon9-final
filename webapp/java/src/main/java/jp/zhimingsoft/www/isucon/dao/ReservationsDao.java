@@ -27,4 +27,7 @@ public interface ReservationsDao {
 
     @Select("select * from reservations where date = #{date} and train_class = #{train_class} and train_name = #{train_name} FOR UPDATE")
     List<Reservations> selectByDateClassNameForUpdate(LocalDate date, String train_class, String train_name);
+
+    @Select("SELECT * FROM reservations WHERE user_id = #{user_id}")
+    List<Reservations>  selectByUserId(Long user_id);
 }

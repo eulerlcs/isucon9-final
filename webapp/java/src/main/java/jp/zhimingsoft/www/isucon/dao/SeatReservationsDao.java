@@ -26,6 +26,9 @@ public interface SeatReservationsDao {
     @SelectProvider(sqlProvider.class)
     List<SeatReservations> selectSeatReservationListForUpdate(LocalDate date, String train_class, String train_name, Integer car_number, Integer seat_row, String seat_column);
 
+    @Select("SELECT * FROM seat_reservations WHERE reservation_id = #{reservation_id}")
+    List<SeatReservations> selectById(long reservation_id);
+
     @Select("SELECT * FROM seat_reservations WHERE reservation_id = #{reservation_id} FOR UPDATE")
     List<SeatReservations> selectByIdForUpdate(long reservation_id);
 

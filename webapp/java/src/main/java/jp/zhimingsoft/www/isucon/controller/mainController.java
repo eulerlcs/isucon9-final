@@ -151,9 +151,13 @@ public class mainController {
         mainService.logoutHandler();
     }
 
+    /*
+        予約取得
+        GET /user/reservations
+    */
     @GetMapping("/api/user/reservations")
-    public String userReservationsHandler() {
-        return "/api/user/reservations";
+    public List<ReservationResponse> userReservationsHandler() {
+        return   mainService.userReservationsHandler();
     }
 
     @GetMapping("/api/user/reservations/:itemId")

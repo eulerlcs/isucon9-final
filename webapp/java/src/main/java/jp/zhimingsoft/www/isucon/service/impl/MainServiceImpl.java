@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -855,12 +856,7 @@ public class MainServiceImpl implements MainService {
         log.info("SUMFARE");
 
         // userID取得。ログインしてないと怒られる。
-        Long userId = (Long) session.getAttribute("user_id");
-        if (userId == null) {
-            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
-        }
-
-        Users user = getUser(userId);
+        Users user = getUser();
 
         //予約ID発行と予約情報登録;
         Reservations result = new Reservations(
@@ -903,8 +899,13 @@ public class MainServiceImpl implements MainService {
     }
 
 
-    private Users getUser(Long id) {
-        Users user = usersDao.selectById(id);
+    private Users getUser() {
+        // userID取得
+        Long userId = (Long) session.getAttribute("user_id");
+        if (userId == null) {
+            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
+        }
+        Users user = usersDao.selectById(userId);
         if (user == null) {
             throw new IsuconException("user not found", HttpStatus.UNAUTHORIZED);
         }
@@ -969,13 +970,7 @@ public class MainServiceImpl implements MainService {
     */
     @Override
     public AuthResponse getAuthHandler() {
-        // userID取得
-        Long userId = (Long) session.getAttribute("user_id");
-        if (userId == null) {
-            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
-        }
-
-        Users user = getUser(userId);
+        Users user = getUser();
 
         AuthResponse resp = new AuthResponse(user.getEmail());
         return resp;
@@ -990,4 +985,96 @@ public class MainServiceImpl implements MainService {
         session.invalidate();
         throw new IsuconException("logged out");
     }
+
+    /*
+        予約取得
+        GET /user/reservations
+    */
+    @Override
+    public List<ReservationResponse> userReservationsHandler() {
+        Users user = getUser();
+
+        List<Reservations> reservationList = reservationsDao.selectByUserId(user.getId());
+        if (reservationList == null) {
+            throw new IsuconException("error", HttpStatus.BAD_REQUEST);
+        }
+
+        List<ReservationResponse> reservationResponseList = new ArrayList<>();
+
+        for (Reservations r : reservationList) {
+            ReservationResponse res = makeReservationResponse(r);
+            if (res == null) {
+                throw new IsuconException("error", HttpStatus.BAD_REQUEST);
+            }
+            reservationResponseList.add(res);
+        }
+
+        return reservationResponseList;
+    }
+
+
+    private ReservationResponse makeReservationResponse(Reservations reservation) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+        TrainTimetableMaster ttm = trainTimetableMasterDao.selectOne(reservation.getDate(), reservation.getTrainClass(), reservation.getTrainName(), reservation.getDeparture());
+        if (ttm == null) {
+            return null;
+        }
+        String departure = ttm.getDeparture().format(dtf);
+
+        ttm = trainTimetableMasterDao.selectOne(reservation.getDate(), reservation.getTrainClass(), reservation.getTrainName(), reservation.getArrival());
+        if (ttm == null) {
+            return null;
+        }
+        String arrival = ttm.getArrival().format(dtf);
+
+        ReservationResponse reservationResponse = new ReservationResponse();
+
+        reservationResponse.setReservationId(reservation.getReservationId());
+        reservationResponse.setDate(reservation.getDate());
+        reservationResponse.setAmount(reservation.getAmount().intValue());
+        reservationResponse.setAdult(reservation.getAdult());
+        reservationResponse.setChild(reservation.getChild());
+        reservationResponse.setDeparture(reservation.getDeparture());
+        reservationResponse.setArrival(reservation.getArrival());
+        reservationResponse.setTrainClass(reservation.getTrainClass());
+        reservationResponse.setTrainName(reservation.getTrainName());
+        reservationResponse.setDepartureTime(departure);
+        reservationResponse.setArrivalTime(arrival);
+
+        List<SeatReservations> seatReservations = seatReservationsDao.selectById(reservation.getReservationId());
+        reservationResponse.setSeats(seatReservations);
+
+        // 1つの予約内で車両番号は全席同じ;
+        reservationResponse.setCarNumber(reservationResponse.getSeats().get(0).getCarNumber());
+
+        if (reservationResponse.getSeats().get(0).getCarNumber() == 0) {
+            reservationResponse.setSeatClass("non-reserved");
+        } else {
+            // 座席種別を取得;
+            SeatMaster seat = seatMasterDao.selectOne6(
+                    reservation.getTrainClass(),
+                    reservationResponse.getCarNumber(),
+                    reservationResponse.getSeats().get(0).getSeatColumn(),
+                    reservationResponse.getSeats().get(0).getSeatRow()
+            );
+
+            if (seat == null) {
+                return null;
+            }
+
+            reservationResponse.setSeatClass(seat.getSeatClass());
+        }
+
+        for (int i = 0; i < reservationResponse.getSeats().size(); i++) {
+            SeatReservations v = reservationResponse.getSeats().get(i);
+            // omit;
+            v.setReservationId(0L);
+            v.setCarNumber(0);
+            reservationResponse.getSeats().set(i, v);
+        }
+        return reservationResponse;
+    }
+
+
 }

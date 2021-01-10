@@ -183,12 +183,14 @@ Date: Sun, 10 Jan 2021 04:19:09 GMT
 ### api/auth/logout
 
 ```
+curl -X POST -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/auth/logout
 
+{"is_error":false,"message":"logged out"}
 ```
 ### api/user/reservations
 
 ```
-
+curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations
 ```
 ### api/user/reservations/:item_id
 
