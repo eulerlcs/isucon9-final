@@ -630,7 +630,7 @@ public class MainServiceImpl implements MainService {
                             if (departureStation == null) {
                                 throw new IsuconException("error", HttpStatus.NOT_FOUND);
                             }
-                            arrivalStation = stationMasterDao.selectByName(reservation.getDeparture());
+                            arrivalStation = stationMasterDao.selectByName(reservation.getArrival());
                             if (arrivalStation == null) {
                                 throw new IsuconException("error", HttpStatus.NOT_FOUND);
                             }

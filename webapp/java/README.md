@@ -98,9 +98,9 @@ curl "http://127.0.0.1:8000/api/train/seats?date=2019-12-31T15:00:00.000Z&train_
 ### api/train/reserve
 
 ```
-curl -i -H "Content-Type: application/json" -b "JSESSIONID=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件指定.json http://127.0.0.1:8000/api/train/reserve
+curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件指定.json http://127.0.0.1:8000/api/train/reserve
 
-curl -i -H "Content-Type: application/json" -b "JSESSIONID=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件非指定.json  http://127.0.0.1:8000/api/train/reserve
+curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件非指定.json  http://127.0.0.1:8000/api/train/reserve
 
 {"is_error":true,"message":"no session"}
 ```
@@ -137,9 +137,6 @@ curl -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000Z",
 
 ```
 curl -i -H "Content-Type: application/json" -d "{\"email\":\"ryu@abc.com\",\"password\":\"123456\"}"  http://127.0.0.1:8000/api/auth/login
-
-{"is_error":false,"message":"autheticated"}
-{"is_error":true,"message":"authentication failed"}
 ```
 
 ```
@@ -153,7 +150,7 @@ Date: Sun, 10 Jan 2021 04:35:28 GMT
 
 ```
 HTTP/1.1 200
-Set-Cookie: JSESSIONID=A4ADB9DC5512DE3829AD8FE403DE981B; Path=/; HttpOnly
+Set-Cookie: session_isutrain=A4ADB9DC5512DE3829AD8FE403DE981B; Path=/; HttpOnly
 Content-Type: application/json
 Transfer-Encoding: chunked
 Date: Sun, 10 Jan 2021 04:36:01 GMT
@@ -166,7 +163,7 @@ Date: Sun, 10 Jan 2021 04:36:01 GMT
 ### api/auth
 
 ```bash
-curl -i -b "JSESSIONID=23560778A6D69DED6A54AA2F298C9A64" http://127.0.0.1:8000/api/auth
+curl -i -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" http://127.0.0.1:8000/api/auth
 ```
 ```
 HTTP/1.1 200

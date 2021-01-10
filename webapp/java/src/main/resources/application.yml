@@ -1,5 +1,9 @@
 server:
   port: 8000
+  servlet:
+    session:
+      cookie:
+        name: session_isutrain
 
 spring:
   datasource:
