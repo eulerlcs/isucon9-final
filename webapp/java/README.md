@@ -189,13 +189,51 @@ curl -X POST -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://12
 ```
 ### api/user/reservations
 
-```
+```bash
 curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations
 ```
+```
+[
+    {
+        "reservation_id": 28,
+        "date": "2020/01/01",
+        "train_class": "最速",
+        "train_name": "1",
+        "car_number": 4,
+        "seat_class": "reserved",
+        "amount": 468750,
+        "adult": 1,
+        "child": 3,
+        "departure": "東京",
+        "arrival": "大阪",
+        "departure_time": "06:01:00",
+        "arrival_time": "08:10:59",
+        "seats": [
+            {
+                "seat_row": 4,
+                "seat_column": "A"
+            },
+            {
+                "seat_row": 4,
+                "seat_column": "B"
+            },
+            {
+                "seat_row": 4,
+                "seat_column": "C"
+            },
+            {
+                "seat_row": 4,
+                "seat_column": "D"
+            }
+        ]
+    }
+]
+```
+
 ### api/user/reservations/:item_id
 
 ```
-
+curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations/228
 ```
 ### api/user/reservations/:item_id/cancel
 

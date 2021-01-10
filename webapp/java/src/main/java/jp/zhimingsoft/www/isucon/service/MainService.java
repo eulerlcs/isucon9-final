@@ -101,4 +101,10 @@ public interface MainService {
         GET /user/reservations
     */
     List<ReservationResponse> userReservationsHandler();
+
+    /*
+		個別予約取得
+		POST /user/reservations/{item_id}
+	*/
+    ReservationResponse userReservationResponseHandler(Long itemId);
 }

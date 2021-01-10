@@ -157,16 +157,20 @@ public class mainController {
     */
     @GetMapping("/api/user/reservations")
     public List<ReservationResponse> userReservationsHandler() {
-        return   mainService.userReservationsHandler();
+        return mainService.userReservationsHandler();
     }
 
-    @GetMapping("/api/user/reservations/:itemId")
-    public String userReservationResponseHandler(String itemId) {
-        return "/api/user/reservations";
+    /*
+       個別予約取得
+       POST /user/reservations/{item_id}
+   */
+    @GetMapping("/api/user/reservations/{item_id}")
+    public ReservationResponse userReservationResponseHandler(@PathVariable("item_id") Long itemId) {
+        return mainService.userReservationResponseHandler(itemId);
     }
 
-    @PostMapping("/api/user/reservations/:itemId/cancel")
-    public String userReservationCancelHandler(String itemId) {
+    @PostMapping("/api/user/reservations/{item_id}/cancel")
+    public String userReservationCancelHandler(@PathVariable("item_id") Long itemId) {
         return "/api/user/reservations";
     }
 }

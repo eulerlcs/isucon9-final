@@ -1012,7 +1012,6 @@ public class MainServiceImpl implements MainService {
         return reservationResponseList;
     }
 
-
     private ReservationResponse makeReservationResponse(Reservations reservation) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -1073,6 +1072,29 @@ public class MainServiceImpl implements MainService {
             v.setCarNumber(0);
             reservationResponse.getSeats().set(i, v);
         }
+        return reservationResponse;
+    }
+
+
+    /*
+        個別予約取得
+        POST /user/reservations/{item_id}
+    */
+    @Override
+    public ReservationResponse userReservationResponseHandler(Long itemId) {
+        Users user = getUser();
+
+        Reservations reservation = reservationsDao.selectByReservationIdUserId(itemId, user.getId());
+        if (reservation == null) {
+            throw new IsuconException("Reservation not found", HttpStatus.NOT_FOUND);
+        }
+
+        ReservationResponse reservationResponse = makeReservationResponse(reservation);
+
+        if (reservationResponse == null) {
+            throw new IsuconException("makeReservationResponse()", HttpStatus.BAD_REQUEST);
+        }
+
         return reservationResponse;
     }
 
