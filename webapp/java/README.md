@@ -233,12 +233,12 @@ curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:
 ### api/user/reservations/:item_id
 
 ```
-curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations/228
+curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations/28
 ```
 ### api/user/reservations/:item_id/cancel
 
 ```
-
+curl -i -X POST -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations/28/cancel
 ```
 
 

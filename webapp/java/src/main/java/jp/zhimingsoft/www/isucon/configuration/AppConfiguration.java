@@ -6,14 +6,23 @@ import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
 
 @Configuration
 @Slf4j
-public class MybatisConfiguration {
+public class AppConfiguration {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
+        return restTemplateBuilder.build();
+    }
+
 //    @Autowired
 //    private DataSource dataSource;
 

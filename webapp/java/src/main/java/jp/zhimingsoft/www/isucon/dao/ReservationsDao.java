@@ -33,4 +33,7 @@ public interface ReservationsDao {
 
     @Select("SELECT * FROM reservations WHERE reservation_id = #{reservation_id} and user_id = #{user_id}")
     Reservations selectByReservationIdUserId(Long reservation_id, Long user_id);
+
+    @Delete("DELETE FROM reservations WHERE reservation_id = #{reservation_id} and user_id = #{user_id}")
+    int delete(Long reservation_id, Long user_id);
 }

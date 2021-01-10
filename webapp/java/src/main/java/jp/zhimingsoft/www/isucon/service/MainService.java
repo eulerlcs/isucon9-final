@@ -107,4 +107,10 @@ public interface MainService {
 		POST /user/reservations/{item_id}
 	*/
     ReservationResponse userReservationResponseHandler(Long itemId);
+
+    /*
+        予約取消
+        POST /user/reservations/{item_id}/cancel
+    */
+    public void userReservationCancelHandler(Long itemId);
 }

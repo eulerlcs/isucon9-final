@@ -169,8 +169,12 @@ public class mainController {
         return mainService.userReservationResponseHandler(itemId);
     }
 
+    /*
+        予約取消
+        POST /user/reservations/{item_id}/cancel
+    */
     @PostMapping("/api/user/reservations/{item_id}/cancel")
-    public String userReservationCancelHandler(@PathVariable("item_id") Long itemId) {
-        return "/api/user/reservations";
+    public void userReservationCancelHandler(@PathVariable("item_id") Long itemId) {
+        mainService.userReservationCancelHandler(itemId);
     }
 }

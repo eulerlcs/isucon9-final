@@ -35,6 +35,9 @@ public interface SeatReservationsDao {
     @Insert("INSERT INTO seat_reservations (reservation_id, car_number, seat_row, seat_column) VALUES (#{reservationId}, #{carNumber}, #{seatRow}, #{seatColumn})")
     int insert(SeatReservations seatReservations);
 
+    @Delete("DELETE FROM seat_reservations WHERE reservation_id = #{reservation_id}")
+    int delete(Long reservation_id);
+
 
     class sqlProvider implements ProviderMethodResolver {
         public String selectReservedSeatList(boolean is_nobori, Long from_station_id, Long to_station_id) {
