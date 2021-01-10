@@ -19,10 +19,11 @@ public class IsuconExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleMyException(IsuconException exception, WebRequest request) {
         HttpHeaders headers = new HttpHeaders();
 
+
         return super.handleExceptionInternal(exception,
                 createErrorResponseBody(exception, request),
                 headers,
-                HttpStatus.BAD_REQUEST,
+                exception.getHttpStatus(),
                 request);
     }
 
@@ -30,7 +31,7 @@ public class IsuconExceptionHandler extends ResponseEntityExceptionHandler {
     private IsuconExceptionResponseBody createErrorResponseBody(IsuconException exception, WebRequest request) {
         IsuconExceptionResponseBody isuconExceptionResponseBody = new IsuconExceptionResponseBody();
 
-        String responseErrorMessage = HttpStatus.BAD_REQUEST.getReasonPhrase();
+        String responseErrorMessage = exception.getHttpStatus().getReasonPhrase();
         String uri = ((ServletWebRequest) request).getRequest().getRequestURI();
 
         isuconExceptionResponseBody.setStatus(exception.getHttpStatus().value());

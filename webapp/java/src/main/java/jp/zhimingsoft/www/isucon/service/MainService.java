@@ -69,8 +69,10 @@ public interface MainService {
 		レスポンスで予約IDを返す;
 		reservationResponse(w http.ResponseWriter, errCode int, id int, ok bool, message string);
 	*/
-    TrainReservationResponse trainReservationHandler(TrainReservationRequest req, Users user);
+    TrainReservationResponse trainReservationHandler(TrainReservationRequest req);
 
-    AuthResponse getAuthHandler(Users user);
+    AuthResponse getAuthHandler();
+
+    void loginHandler(Users postUser);
 
 }

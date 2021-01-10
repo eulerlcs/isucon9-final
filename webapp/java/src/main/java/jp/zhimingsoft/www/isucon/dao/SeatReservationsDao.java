@@ -29,7 +29,7 @@ public interface SeatReservationsDao {
     @Select("SELECT * FROM seat_reservations WHERE reservation_id = #{reservation_id} FOR UPDATE")
     List<SeatReservations> selectByIdForUpdate(long reservation_id);
 
-    @Insert("INSERT INTO seat_reservations (reservation_id, car_number, seat_row, seat_column) VALUES (#{reservation_id}, #{car_number}, #{seat_row}, #{seat_column})")
+    @Insert("INSERT INTO seat_reservations (reservation_id, car_number, seat_row, seat_column) VALUES (#{reservationId}, #{carNumber}, #{seatRow}, #{seatColumn})")
     int insert(SeatReservations seatReservations);
 
 

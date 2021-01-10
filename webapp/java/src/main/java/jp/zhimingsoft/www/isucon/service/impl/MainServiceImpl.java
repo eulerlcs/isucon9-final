@@ -10,7 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.servlet.http.HttpSession;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -20,6 +27,9 @@ import java.util.*;
 @Service
 @Slf4j
 public class MainServiceImpl implements MainService {
+    @Autowired
+    HttpSession session;
+
     @Autowired
     private SeatReservationsDao seatReservationsDao;
     @Autowired
@@ -484,7 +494,7 @@ public class MainServiceImpl implements MainService {
 	*/
     @Override
     @Transactional
-    public TrainReservationResponse trainReservationHandler(TrainReservationRequest req, Users user) {
+    public TrainReservationResponse trainReservationHandler(TrainReservationRequest req) {
         // 乗車日の日付表記統一;
         ZonedDateTime date = req.getDate().withZoneSameInstant(ZoneOffset.ofHours(9));
         if (!Utils.checkAvailableDate(date)) {
@@ -570,7 +580,7 @@ public class MainServiceImpl implements MainService {
         switch (req.getSeats().size()) {
             case 0:
                 ;
-                if (req.getSeatClass() == "non-reserved") {
+                if (Objects.equals(req.getSeatClass(), "non-reserved")) {
                     // non-reservedはそもそもあいまい検索もせずダミーのRow/Columnで予約を確定させる。
                     break;
                 }
@@ -659,22 +669,23 @@ public class MainServiceImpl implements MainService {
                     reserved = false;
                     vargue = true;
                     seatnum = (req.getAdult() + req.getChild() - 1); // 全体の人数からあいまい指定席分を引いておく;
-                    if (req.getColumn() == "") {                 // A/B/C/D/Eを指定しなければ、空いている適当な指定席を取るあいまいモード;
+                    if (!StringUtils.hasLength(req.getColumn())) {                 // A/B/C/D/Eを指定しなければ、空いている適当な指定席を取るあいまいモード;
                         seatnum = req.getAdult() + req.getChild(); // あいまい指定せず大人＋小人分の座席を取る;
                         reserved = true;                   // dummy;
                         vargue = false;                    // dummy;
                     }
-                    RequestSeat CandidateSeat = new RequestSeat();
+                    RequestSeat CandidateSeat = null;
                     List<RequestSeat> CandidateSeats = new ArrayList<>();
 
                     // シート分だけ回して予約できる席を検索;
                     int i = 0;
                     for (SeatInformation seat : seatInformationList) {
-                        if (seat.getColumn() == req.getColumn() && !seat.isOccupied() && !reserved && vargue) { // あいまい席があいてる;
+                        if (Objects.equals(seat.getColumn(), req.getColumn()) && !seat.isOccupied() && !reserved && vargue) { // あいまい席があいてる;
                             VagueSeat.setRow(seat.getRow());
                             VagueSeat.setColumn(seat.getColumn());
                             reserved = true;
                         } else if (!seat.isOccupied() && i < seatnum) { // 単に席があいてる;
+                            CandidateSeat = new RequestSeat();
                             CandidateSeat.setRow(seat.getRow());
                             CandidateSeat.setColumn(seat.getColumn());
                             CandidateSeats.add(CandidateSeat);
@@ -748,7 +759,7 @@ public class MainServiceImpl implements MainService {
         }
 
         for (Reservations reservation : reservations) {
-            if (req.getSeatClass() == "non-reserved") {
+            if (Objects.equals(req.getSeatClass(), "non-reserved")) {
                 break;
             }
 
@@ -802,7 +813,7 @@ public class MainServiceImpl implements MainService {
 
                 for (SeatReservations v : seatReservations) {
                     for (RequestSeat seat : req.getSeats()) {
-                        if (v.getCarNumber() == req.getCarNumber() && v.getSeatRow() == seat.getRow() && v.getSeatColumn() == seat.getColumn()) {
+                        if (Objects.equals(v.getCarNumber(), req.getCarNumber()) && Objects.equals(v.getSeatRow(), seat.getRow()) && Objects.equals(v.getSeatColumn(), seat.getColumn())) {
                             log.info("Duplicated ", reservation);
                             throw new IsuconException("リクエストに既に予約された席が含まれています", HttpStatus.BAD_REQUEST);
                         }
@@ -810,10 +821,10 @@ public class MainServiceImpl implements MainService {
                 }
             }
         }
-        // 3段階の予約前チェック終わり;
+        // 3段階の予約前チェック終わり
 
-        // 自由席は強制的にSeats情報をダミーにする（自由席なのに席指定予約は不可）;
-        if (req.getSeatClass() == "non-reserved") {
+        // 自由席は強制的にSeats情報をダミーにする（自由席なのに席指定予約は不可）
+        if (Objects.equals(req.getSeatClass(), "non-reserved")) {
             req.setSeats(new ArrayList<RequestSeat>());
             RequestSeat dummySeat = new RequestSeat();
             req.setCarNumber(0);
@@ -847,8 +858,13 @@ public class MainServiceImpl implements MainService {
         int sumFare = (req.getAdult() * fare) + (req.getChild() * fare) / 2;
         log.info("SUMFARE");
 
-        // userID取得。ログインしてないと怒られる。;
-        getUser(user);
+        // userID取得。ログインしてないと怒られる。
+        Long userId = (Long) session.getAttribute("user_id");
+        if (userId == null) {
+            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
+        }
+
+        Users user = getUser(userId);
 
         //予約ID発行と予約情報登録;
         Reservations result = new Reservations(
@@ -891,26 +907,57 @@ public class MainServiceImpl implements MainService {
     }
 
 
-    private Users getUser(Users user) {
-        if (user == null || user.getId() == null) {
-            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
-        }
-
-        Users xx = usersDao.selectById(user.getId());
-        if (xx == null) {
+    private Users getUser(Long id) {
+        Users user = usersDao.selectById(id);
+        if (user == null) {
             throw new IsuconException("user not found", HttpStatus.UNAUTHORIZED);
         }
 
-        return xx;
+        return user;
     }
 
     @Override
-    public AuthResponse getAuthHandler(Users user) {
+    public AuthResponse getAuthHandler() {
         // userID取得
-        getUser(user);
+        Long userId = (Long) session.getAttribute("user_id");
+        if (userId == null) {
+            throw new IsuconException("no session", HttpStatus.UNAUTHORIZED);
+        }
+
+        Users user = getUser(userId);
 
         AuthResponse resp = new AuthResponse(user.getEmail());
         return resp;
+    }
+	/*
+		ログイン
+		POST /auth/login
+	*/
+
+    @Override
+    public void loginHandler(Users postUser) {
+        Users user = usersDao.selectByEmail(postUser.getEmail());
+        if (user == null) {
+            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
+        }
+
+        try {
+            PBEKeySpec keySpec = new PBEKeySpec(postUser.getPassword().toCharArray(), user.getSalt(), 100, 2048);
+            // ハッシュ化
+            String ALGORITHM = "PBKDF2WithHmacSHA256";
+            SecretKeyFactory skf = SecretKeyFactory.getInstance(ALGORITHM);
+            SecretKey sk = skf.generateSecret(keySpec);
+            byte[] challengePassword = sk.getEncoded();
+            if (!Arrays.equals(user.getSuperSecurePassword(), challengePassword)) {
+                throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
+            }
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
+        }
+
+        session.setAttribute("user_id", user.getId());
+
+        throw new IsuconException("autheticated");
     }
 
 

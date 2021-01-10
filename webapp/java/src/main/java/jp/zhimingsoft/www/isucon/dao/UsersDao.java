@@ -13,8 +13,13 @@ public interface UsersDao {
     @Select("SELECT * FROM users WHERE id = #{id}")
     Users selectById(Long id);
 
+    @Select("SELECT * FROM users WHERE email = #{email}")
+    Users selectByEmail(String email);
+
     /**
      * @mbg.generated generated automatically, do not modify!
      */
     int insert(Users record);
+
+
 }

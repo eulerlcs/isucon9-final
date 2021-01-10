@@ -1,12 +1,15 @@
 package jp.zhimingsoft.www.isucon.controller;
 
 import jp.zhimingsoft.www.isucon.domain.*;
+import jp.zhimingsoft.www.isucon.exception.IsuconException;
 import jp.zhimingsoft.www.isucon.service.MainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -14,6 +17,9 @@ import java.util.List;
 @Slf4j
 @SessionAttributes("user")
 public class mainController {
+
+    @Autowired
+    HttpSession session;
 
     @Autowired
     private MainService mainService;
@@ -100,10 +106,8 @@ public class mainController {
         レスポンスで予約IDを返す;
     */
     @PostMapping("/api/train/reserve")
-    public TrainReservationResponse trainReservationHandler(
-            @RequestBody TrainReservationRequest req,
-            @ModelAttribute("user") Users user) {
-        return mainService.trainReservationHandler(req, user);
+    public TrainReservationResponse trainReservationHandler(@RequestBody TrainReservationRequest req) {
+         return mainService.trainReservationHandler(req);
     }
 
     @PostMapping("/api/train/reservation/commit")
@@ -114,8 +118,8 @@ public class mainController {
     // 認証関連
 
     @GetMapping("/api/auth")
-    public AuthResponse getAuthHandler(@ModelAttribute("user") Users user) {
-        return mainService.getAuthHandler(user);
+    public AuthResponse getAuthHandler() {
+        return mainService.getAuthHandler();
     }
 
     @PostMapping("/api/auth/signup")
@@ -124,8 +128,8 @@ public class mainController {
     }
 
     @PostMapping("/api/auth/login")
-    public String loginHandler() {
-        return "/api/auth/login";
+    public void loginHandler(@RequestBody Users postUser) {
+        mainService.loginHandler(postUser);
     }
 
     @PostMapping("/api/auth/logout")
