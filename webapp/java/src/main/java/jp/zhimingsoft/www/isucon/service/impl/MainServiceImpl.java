@@ -981,4 +981,13 @@ public class MainServiceImpl implements MainService {
         return resp;
     }
 
+    /*
+        ログアウト
+        POST /auth/logout
+    */
+    public void logoutHandler() {
+        session.setAttribute("user_id", 0L);
+        session.invalidate();
+        throw new IsuconException("logged out");
+    }
 }

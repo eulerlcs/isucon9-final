@@ -90,4 +90,9 @@ public interface MainService {
     */
     AuthResponse getAuthHandler();
 
+    /*
+        ログアウト
+        POST /auth/logout
+    */
+    void logoutHandler();
 }

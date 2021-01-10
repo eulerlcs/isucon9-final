@@ -114,8 +114,6 @@ public class mainController {
     }
 
     // 認証関連
-
-
     /*
        ユーザー登録
        POST /auth/signup
@@ -144,9 +142,13 @@ public class mainController {
         return mainService.getAuthHandler();
     }
 
+    /*
+        ログアウト
+        POST /auth/logout
+    */
     @PostMapping("/api/auth/logout")
-    public String logoutHandler() {
-        return "/api/auth/logout";
+    public void logoutHandler() {
+        mainService.logoutHandler();
     }
 
     @GetMapping("/api/user/reservations")
@@ -163,5 +165,4 @@ public class mainController {
     public String userReservationCancelHandler(String itemId) {
         return "/api/user/reservations";
     }
-
 }
