@@ -71,6 +71,18 @@ public interface MainService {
 	*/
     TrainReservationResponse trainReservationHandler(TrainReservationRequest req);
 
+    /*
+        支払い及び予約確定API
+        POST /api/train/reservation/commit
+        {
+            "card_token": "161b2f8f-791b-4798-42a5-ca95339b852b",
+            "reservation_id": "1"
+        }
+
+        前段でフロントがクレカ非保持化対応用のpayment-APIを叩き、card_tokenを手に入れている必要がある
+        レスポンスは成功か否かのみ返す
+    */
+    public ReservationPaymentResponse reservationPaymentHandler(ReservationPaymentRequest req);
 
     /*
        ユーザー登録

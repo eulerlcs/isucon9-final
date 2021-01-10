@@ -11,6 +11,7 @@ import jp.zhimingsoft.www.isucon.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -416,7 +417,7 @@ public class MainServiceImpl implements MainService {
             log.info(seatReservationList.toString());
 
             for (SeatReservations seatReservation : seatReservationList) {
-                Reservations reservation = reservationsDao.selectById(seatReservation.getReservationId());
+                Reservations reservation = reservationsDao.selectByReservationId(seatReservation.getReservationId());
 
                 StationMaster departureStation = stationMasterDao.selectByName(reservation.getDeparture());
                 if (fromStation == null) {
@@ -908,6 +909,85 @@ public class MainServiceImpl implements MainService {
         return rr;
     }
 
+    /*
+		支払い及び予約確定API
+		POST /api/train/reservation/commit
+		{
+			"card_token": "161b2f8f-791b-4798-42a5-ca95339b852b",
+			"reservation_id": "1"
+		}
+
+		前段でフロントがクレカ非保持化対応用のpayment-APIを叩き、card_tokenを手に入れている必要がある
+		レスポンスは成功か否かのみ返す
+	*/
+    @Override
+    @Transactional
+    public ReservationPaymentResponse reservationPaymentHandler(ReservationPaymentRequest req) {
+        // 予約IDで検索;
+        Reservations reservation = reservationsDao.selectByReservationId(req.getReservationId().longValue());
+        if (reservation == null) {
+            throw new IsuconException("予約情報がみつかりません", HttpStatus.NOT_FOUND);
+        }
+
+        // 支払い前のユーザチェック。本人以外のユーザの予約を支払ったりキャンセルできてはいけない。
+        Users user = getUser();
+
+        if (!Objects.equals(reservation.getUserId(), user.getId())) {
+            throw new IsuconException("他のユーザIDの支払いはできません", HttpStatus.FORBIDDEN);
+        }
+
+        // 予約情報の支払いステータス確認
+        switch (reservation.getStatus()) {
+            case "done":
+                throw new IsuconException("既に支払いが完了している予約IDです", HttpStatus.FORBIDDEN);
+            default:
+                break;
+        }
+
+        // 決済する;
+        PaymentInformationRequest payInfo = new PaymentInformationRequest(req.getCardToken(), req.getReservationId(), reservation.getAmount().intValue());
+
+        String payment_api = System.getenv("PAYMENT_API");
+        if (!StringUtils.hasLength(payment_api)) {
+            payment_api = "http://payment:5000";
+        }
+
+        ResponseEntity<PaymentResponse> resp = null;
+        try {
+            // TODO 劉春生　動作確認NG
+            resp = restTemplate.postForEntity(payment_api + "/payment/", payInfo, PaymentResponse.class);
+        } catch (RestClientException e) {
+            HttpStatus httpStatus = resp == null ? HttpStatus.INTERNAL_SERVER_ERROR : resp.getStatusCode();
+            throw new IsuconException("HTTP POSTに失敗しました", httpStatus);
+        }
+
+        // リクエスト失敗;
+        if (!Objects.equals(resp.getStatusCode(), HttpStatus.OK)) {
+            throw new IsuconException("決済に失敗しました。カードトークンや支払いIDが間違っている可能性があります", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // リクエスト取り出し;
+        PaymentResponse output = resp.getBody();
+        if (output == null) {
+            throw new IsuconException("JSON parseに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // 予約情報の更新;
+        Reservations record = new Reservations();
+        record.setReservationId(req.getReservationId().longValue());
+        record.setStatus("done");
+        record.setPaymentId(output.getPaymentId());
+
+        int ret = reservationsDao.update(record);
+        if (ret != 1) {
+            throw new IsuconException("予約情報の更新に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        ReservationPaymentResponse rr = new ReservationPaymentResponse(true);
+
+        return rr;
+    }
+
 
     private Users getUser() {
         // userID取得
@@ -1143,6 +1223,7 @@ public class MainServiceImpl implements MainService {
                 }
 
                 try {
+                    // TODO 劉春生　動作未確認
                     restTemplate.delete(payment_api + "/payment/" + reservation.getPaymentId());
                 } catch (RestClientException e) {
                     throw new IsuconException("HTTPリクエストの作成に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1165,5 +1246,4 @@ public class MainServiceImpl implements MainService {
 
         throw new IsuconException("cancell complete");
     }
-
 }

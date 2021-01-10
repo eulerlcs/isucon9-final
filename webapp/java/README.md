@@ -125,12 +125,10 @@ curl -i -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000
 
 
 
-
-
 ### api/train/reservation/commit
 
-```
-
+```bash
+curl -i -H "Content-Type: application/json" -b "session_isutrain=0C79524F2F6421ECF76568D8CFFF5D9B" -d "{\"card_token\":\"161b2f8f-791b-4798-42a5-ca95339b852b\",\"reservation_id\":\"29\"}" http://127.0.0.1:8000/api/train/reservation/commit
 ```
 
 
