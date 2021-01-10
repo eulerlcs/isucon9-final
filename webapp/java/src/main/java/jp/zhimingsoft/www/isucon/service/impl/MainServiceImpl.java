@@ -4,6 +4,7 @@ import jp.zhimingsoft.www.isucon.dao.*;
 import jp.zhimingsoft.www.isucon.domain.*;
 import jp.zhimingsoft.www.isucon.exception.IsuconException;
 import jp.zhimingsoft.www.isucon.service.MainService;
+import jp.zhimingsoft.www.isucon.utils.SecureUtil;
 import jp.zhimingsoft.www.isucon.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import javax.servlet.http.HttpSession;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -916,6 +912,61 @@ public class MainServiceImpl implements MainService {
         return user;
     }
 
+
+    /*
+        ログイン
+        POST /auth/login
+    */
+    @Override
+    public void loginHandler(Users postUser) {
+        Users user = usersDao.selectByEmail(postUser.getEmail());
+        if (user == null) {
+            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
+        }
+
+        byte[] challengePassword = SecureUtil.getSecurePassword(postUser.getPassword(), user.getSalt());
+        if (challengePassword == null) {
+            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
+        }
+        if (!Arrays.equals(user.getSuperSecurePassword(), challengePassword)) {
+            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
+        }
+
+        session.setAttribute("user_id", user.getId());
+
+        throw new IsuconException("autheticated");
+    }
+
+    /*
+       ユーザー登録
+       POST /auth/signup
+   */
+    public void signUpHandler(Users postUser) {
+        // TODO: validation;
+        byte[] salt = SecureUtil.generateSalt(1024);
+        if (salt == null) {
+            throw new IsuconException("salt generator error", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        byte[] superSecurePassword = SecureUtil.getSecurePassword(postUser.getPassword(), salt);
+
+        Users user = new Users();
+        user.setEmail(postUser.getEmail());
+        user.setSalt(salt);
+        user.setSuperSecurePassword(superSecurePassword);
+
+        int ret = usersDao.insert(user);
+        if (ret != 1) {
+            throw new IsuconException("user registration failed", HttpStatus.BAD_REQUEST);
+        }
+
+        throw new IsuconException("registration complete");
+    }
+
+    /*
+       認証情報取得
+       GET /auth/login
+    */
     @Override
     public AuthResponse getAuthHandler() {
         // userID取得
@@ -929,36 +980,5 @@ public class MainServiceImpl implements MainService {
         AuthResponse resp = new AuthResponse(user.getEmail());
         return resp;
     }
-	/*
-		ログイン
-		POST /auth/login
-	*/
-
-    @Override
-    public void loginHandler(Users postUser) {
-        Users user = usersDao.selectByEmail(postUser.getEmail());
-        if (user == null) {
-            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
-        }
-
-        try {
-            PBEKeySpec keySpec = new PBEKeySpec(postUser.getPassword().toCharArray(), user.getSalt(), 100, 2048);
-            // ハッシュ化
-            String ALGORITHM = "PBKDF2WithHmacSHA256";
-            SecretKeyFactory skf = SecretKeyFactory.getInstance(ALGORITHM);
-            SecretKey sk = skf.generateSecret(keySpec);
-            byte[] challengePassword = sk.getEncoded();
-            if (!Arrays.equals(user.getSuperSecurePassword(), challengePassword)) {
-                throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
-            }
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
-        }
-
-        session.setAttribute("user_id", user.getId());
-
-        throw new IsuconException("autheticated");
-    }
-
 
 }

@@ -71,8 +71,23 @@ public interface MainService {
 	*/
     TrainReservationResponse trainReservationHandler(TrainReservationRequest req);
 
-    AuthResponse getAuthHandler();
 
+    /*
+       ユーザー登録
+       POST /auth/signup
+   */
+    void signUpHandler(Users user);
+
+    /*
+        ログイン
+        POST /auth/login
+    */
     void loginHandler(Users postUser);
+
+    /*
+       認証情報取得
+       GET /auth/login
+    */
+    AuthResponse getAuthHandler();
 
 }

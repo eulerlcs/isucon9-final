@@ -97,7 +97,7 @@ curl "http://127.0.0.1:8000/api/train/seats?date=2019-12-31T15:00:00.000Z&train_
 
 ### api/train/reserve
 
-```
+```bash
 curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件指定.json http://127.0.0.1:8000/api/train/reserve
 
 curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件非指定.json  http://127.0.0.1:8000/api/train/reserve
@@ -113,14 +113,14 @@ curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DE
 
 #### all in one --  git bash OK,  cmd OK
 
-```
-curl -X POST -H "Content-Type: application/json" -d "{\"date\":\"2019-12-31T15:00:00.000Z\",\"train_class\":\"\u6700\u901f\",\"train_name\":\"1\",\"car_number\":4,\"seat_class\":\"reserved\",\"departure\":\"\u6771\u4eac\",\"arrival\":\"\u5927\u962a\",\"child\":0,\"adult\":1,\"column\":\"\",\"seats\":[{\"row\":1,\"column\":\"E\",\"class\":\"reserved\",\"is_smoking_seat\":false,\"is_occupied\":false,\"text\":\"\u25cb\",\"disabled\":false,\"selected\":true}]}" http://127.0.0.1:8000/api/train/reserve
+```bash
+curl -i -H "Content-Type: application/json" -d "{\"date\":\"2019-12-31T15:00:00.000Z\",\"train_class\":\"\u6700\u901f\",\"train_name\":\"1\",\"car_number\":4,\"seat_class\":\"reserved\",\"departure\":\"\u6771\u4eac\",\"arrival\":\"\u5927\u962a\",\"child\":0,\"adult\":1,\"column\":\"\",\"seats\":[{\"row\":1,\"column\":\"E\",\"class\":\"reserved\",\"is_smoking_seat\":false,\"is_occupied\":false,\"text\":\"\u25cb\",\"disabled\":false,\"selected\":true}]}" http://127.0.0.1:8000/api/train/reserve
 ```
 
 #### all in one   -- git bash OK,  cmd NG
 
 ```bash
-curl -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000Z","train_class":"\u6700\u901f","train_name":"1","car_number":4,"seat_class":"reserved","departure":"\u6771\u4eac","arrival":"\u5927\u962a","child":0,"adult":1,"column":"","seats":[{"row":1,"column":"E","class":"reserved","is_smoking_seat":false,"is_occupied":false,"text":"\u25cb","disabled":false,"selected":true}]}' http://127.0.0.1:8000/api/train/reserve
+curl -i -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000Z","train_class":"\u6700\u901f","train_name":"1","car_number":4,"seat_class":"reserved","departure":"\u6771\u4eac","arrival":"\u5927\u962a","child":0,"adult":1,"column":"","seats":[{"row":1,"column":"E","class":"reserved","is_smoking_seat":false,"is_occupied":false,"text":"\u25cb","disabled":false,"selected":true}]}' http://127.0.0.1:8000/api/train/reserve
 ```
 
 
@@ -133,10 +133,18 @@ curl -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000Z",
 
 ```
 
+
+
+### api/auth/signup
+
+```bash
+curl -i -H "Content-Type: application/json" -d "{\"email\":\"aaa@abc.com\",\"password\":\"123456\"}" http://127.0.0.1:8000/api/auth/signup
+```
+
 ### api/auth/login
 
 ```
-curl -i -H "Content-Type: application/json" -d "{\"email\":\"ryu@abc.com\",\"password\":\"123456\"}"  http://127.0.0.1:8000/api/auth/login
+curl -i -H "Content-Type: application/json" -d "{\"email\":\"aaa@abc.com\",\"password\":\"123456\"}"  http://127.0.0.1:8000/api/auth/login
 ```
 
 ```
@@ -158,8 +166,6 @@ Date: Sun, 10 Jan 2021 04:36:01 GMT
 {"is_error":false,"message":"autheticated"}
 ```
 
-
-
 ### api/auth
 
 ```bash
@@ -174,13 +180,6 @@ Date: Sun, 10 Jan 2021 04:19:09 GMT
 {"email":"ryu@abc.com"}
 ```
 
-
-
-### api/auth/signup
-
-```
-
-```
 ### api/auth/logout
 
 ```

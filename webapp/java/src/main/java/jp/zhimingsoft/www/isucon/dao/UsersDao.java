@@ -2,6 +2,8 @@ package jp.zhimingsoft.www.isucon.dao;
 
 import jp.zhimingsoft.www.isucon.domain.Users;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
 
 public interface UsersDao {
@@ -16,10 +18,7 @@ public interface UsersDao {
     @Select("SELECT * FROM users WHERE email = #{email}")
     Users selectByEmail(String email);
 
-    /**
-     * @mbg.generated generated automatically, do not modify!
-     */
+    @Insert("INSERT INTO users (email, salt, super_secure_password) VALUES (#{email}, #{salt}, #{superSecurePassword})")
+    @Options(keyProperty = "id")
     int insert(Users record);
-
-
 }

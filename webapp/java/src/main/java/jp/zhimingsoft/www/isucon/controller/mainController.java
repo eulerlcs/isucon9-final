@@ -1,12 +1,10 @@
 package jp.zhimingsoft.www.isucon.controller;
 
 import jp.zhimingsoft.www.isucon.domain.*;
-import jp.zhimingsoft.www.isucon.exception.IsuconException;
 import jp.zhimingsoft.www.isucon.service.MainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -107,7 +105,7 @@ public class mainController {
     */
     @PostMapping("/api/train/reserve")
     public TrainReservationResponse trainReservationHandler(@RequestBody TrainReservationRequest req) {
-         return mainService.trainReservationHandler(req);
+        return mainService.trainReservationHandler(req);
     }
 
     @PostMapping("/api/train/reservation/commit")
@@ -117,19 +115,33 @@ public class mainController {
 
     // 認証関連
 
-    @GetMapping("/api/auth")
-    public AuthResponse getAuthHandler() {
-        return mainService.getAuthHandler();
-    }
 
+    /*
+       ユーザー登録
+       POST /auth/signup
+   */
     @PostMapping("/api/auth/signup")
-    public String signUpHandler() {
+    public String signUpHandler(@RequestBody Users user) {
+        mainService.signUpHandler(user);
         return "/api/auth/signup";
     }
 
+    /*
+        ログイン
+        POST /auth/login
+    */
     @PostMapping("/api/auth/login")
     public void loginHandler(@RequestBody Users postUser) {
         mainService.loginHandler(postUser);
+    }
+
+    /*
+       認証情報取得
+       GET /auth/login
+    */
+    @GetMapping("/api/auth")
+    public AuthResponse getAuthHandler() {
+        return mainService.getAuthHandler();
     }
 
     @PostMapping("/api/auth/logout")
