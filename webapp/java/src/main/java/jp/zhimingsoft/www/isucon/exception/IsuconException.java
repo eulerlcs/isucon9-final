@@ -16,10 +16,4 @@ public class IsuconException extends RuntimeException {
         this.isError = true;
         this.httpStatus = httpStatus;
     }
-
-    public IsuconException(String message) {
-        super(message);
-        this.isError = false;
-        this.httpStatus = HttpStatus.OK;
-    }
 }

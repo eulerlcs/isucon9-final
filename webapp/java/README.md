@@ -98,9 +98,9 @@ curl "http://127.0.0.1:8000/api/train/seats?date=2019-12-31T15:00:00.000Z&train_
 ### api/train/reserve
 
 ```bash
-curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件指定.json http://127.0.0.1:8000/api/train/reserve
+curl -i -H "Content-Type: application/json" -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" -d @data-reserve-全条件指定.json http://127.0.0.1:8000/api/train/reserve
 
-curl -i -H "Content-Type: application/json" -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" -d @data-reserve-全条件非指定.json  http://127.0.0.1:8000/api/train/reserve
+curl -i -H "Content-Type: application/json" -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" -d @data-reserve-全条件非指定.json  http://127.0.0.1:8000/api/train/reserve
 
 {"is_error":true,"message":"no session"}
 ```
@@ -128,7 +128,7 @@ curl -i -H "Content-Type: application/json" -d '{"date":"2019-12-31T15:00:00.000
 ### api/train/reservation/commit
 
 ```bash
-curl -i -H "Content-Type: application/json" -b "session_isutrain=0C79524F2F6421ECF76568D8CFFF5D9B" -d "{\"card_token\":\"161b2f8f-791b-4798-42a5-ca95339b852b\",\"reservation_id\":\"29\"}" http://127.0.0.1:8000/api/train/reservation/commit
+curl -i -H "Content-Type: application/json" -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" -d "{\"card_token\":\"161b2f8f-791b-4798-42a5-ca95339b852b\",\"reservation_id\":\"1\"}" http://127.0.0.1:8000/api/train/reservation/commit
 ```
 
 
@@ -167,7 +167,7 @@ Date: Sun, 10 Jan 2021 04:36:01 GMT
 ### api/auth
 
 ```bash
-curl -i -b "session_isutrain=23560778A6D69DED6A54AA2F298C9A64" http://127.0.0.1:8000/api/auth
+curl -i -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" http://127.0.0.1:8000/api/auth
 ```
 ```
 HTTP/1.1 200
@@ -181,14 +181,14 @@ Date: Sun, 10 Jan 2021 04:19:09 GMT
 ### api/auth/logout
 
 ```
-curl -X POST -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/auth/logout
+curl -X POST -i -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" http://127.0.0.1:8000/api/auth/logout
 
 {"is_error":false,"message":"logged out"}
 ```
 ### api/user/reservations
 
 ```bash
-curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations
+curl -i -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" http://127.0.0.1:8000/api/user/reservations
 ```
 ```
 [
@@ -231,12 +231,12 @@ curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:
 ### api/user/reservations/:item_id
 
 ```
-curl -i -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations/28
+curl -i -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" http://127.0.0.1:8000/api/user/reservations/2
 ```
 ### api/user/reservations/:item_id/cancel
 
 ```
-curl -i -X POST -b "session_isutrain=07752DB772F76FE96D3CE3B4CE337688" http://127.0.0.1:8000/api/user/reservations/28/cancel
+curl -i -X POST -b "session_isutrain=F92FA80C1BFD01D659065D93E7F4DAAC" http://127.0.0.1:8000/api/user/reservations/2/cancel
 ```
 
 

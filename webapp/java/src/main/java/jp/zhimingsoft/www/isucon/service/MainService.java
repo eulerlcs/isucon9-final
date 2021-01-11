@@ -1,6 +1,7 @@
 package jp.zhimingsoft.www.isucon.service;
 
 import jp.zhimingsoft.www.isucon.domain.*;
+import jp.zhimingsoft.www.isucon.utils.MessageResponse;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -88,17 +89,17 @@ public interface MainService {
        ユーザー登録
        POST /auth/signup
    */
-    void signUpHandler(Users user);
+    MessageResponse signUpHandler(Users user);
 
     /*
         ログイン
         POST /auth/login
     */
-    void loginHandler(Users postUser);
+    MessageResponse loginHandler(Users postUser);
 
     /*
        認証情報取得
-       GET /auth/login
+       GET /auth
     */
     AuthResponse getAuthHandler();
 
@@ -106,7 +107,7 @@ public interface MainService {
         ログアウト
         POST /auth/logout
     */
-    void logoutHandler();
+    MessageResponse logoutHandler();
 
     /*
         予約取得
@@ -124,5 +125,5 @@ public interface MainService {
         予約取消
         POST /user/reservations/{item_id}/cancel
     */
-    public void userReservationCancelHandler(Long itemId);
+    public MessageResponse userReservationCancelHandler(Long itemId);
 }

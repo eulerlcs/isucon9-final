@@ -6,6 +6,7 @@ import jp.zhimingsoft.www.isucon.dao.*;
 import jp.zhimingsoft.www.isucon.domain.*;
 import jp.zhimingsoft.www.isucon.exception.IsuconException;
 import jp.zhimingsoft.www.isucon.service.MainService;
+import jp.zhimingsoft.www.isucon.utils.MessageResponse;
 import jp.zhimingsoft.www.isucon.utils.SecureUtil;
 import jp.zhimingsoft.www.isucon.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
@@ -1009,7 +1010,7 @@ public class MainServiceImpl implements MainService {
         POST /auth/login
     */
     @Override
-    public void loginHandler(Users postUser) {
+    public MessageResponse loginHandler(Users postUser) {
         Users user = usersDao.selectByEmail(postUser.getEmail());
         if (user == null) {
             throw new IsuconException("authentication failed", HttpStatus.FORBIDDEN);
@@ -1025,15 +1026,16 @@ public class MainServiceImpl implements MainService {
 
         session.setAttribute("user_id", user.getId());
 
-        throw new IsuconException("autheticated");
+        return new MessageResponse("autheticated");
     }
 
     /*
        ユーザー登録
        POST /auth/signup
    */
+    @Override
     @Transactional
-    public void signUpHandler(Users postUser) {
+    public MessageResponse signUpHandler(Users postUser) {
         // TODO: validation;
         byte[] salt = SecureUtil.generateSalt(1024);
         if (salt == null) {
@@ -1052,12 +1054,12 @@ public class MainServiceImpl implements MainService {
             throw new IsuconException("user registration failed", HttpStatus.BAD_REQUEST);
         }
 
-        throw new IsuconException("registration complete");
+        return new MessageResponse("registration complete");
     }
 
     /*
        認証情報取得
-       GET /auth/login
+       GET /auth
     */
     @Override
     public AuthResponse getAuthHandler() {
@@ -1071,10 +1073,10 @@ public class MainServiceImpl implements MainService {
         ログアウト
         POST /auth/logout
     */
-    public void logoutHandler() {
+    @Override
+    public MessageResponse logoutHandler() {
         session.setAttribute("user_id", 0L);
-        session.invalidate();
-        throw new IsuconException("logged out");
+        return new MessageResponse("logged out");
     }
 
     /*
@@ -1195,7 +1197,7 @@ public class MainServiceImpl implements MainService {
     */
     @Override
     @Transactional
-    public void userReservationCancelHandler(Long itemId) {
+    public MessageResponse userReservationCancelHandler(Long itemId) {
         Users user = getUser();
 
         Reservations reservation = reservationsDao.selectByReservationIdUserId(itemId, user.getId());
@@ -1244,6 +1246,6 @@ public class MainServiceImpl implements MainService {
             throw new IsuconException("seat naiyo", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        throw new IsuconException("cancell complete");
+        return new MessageResponse("cancell complete");
     }
 }

@@ -25,7 +25,7 @@ public class SecureUtil {
         return salt;
     }
 
-        public static byte[] getSecurePassword(String password, byte[] salt) {
+    public static byte[] getSecurePassword(String password, byte[] salt) {
         PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 100, 2048);
 
         // ハッシュ化

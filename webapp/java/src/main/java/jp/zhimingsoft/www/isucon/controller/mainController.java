@@ -2,11 +2,14 @@ package jp.zhimingsoft.www.isucon.controller;
 
 import jp.zhimingsoft.www.isucon.domain.*;
 import jp.zhimingsoft.www.isucon.service.MainService;
+import jp.zhimingsoft.www.isucon.utils.MessageResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.SessionStatus;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -28,19 +31,24 @@ public class mainController {
     }
 
     @PostMapping("/initialize")
-    public InitializeResponse initializeHandler() {
+    public InitializeResponse initializeHandler(HttpServletRequest request) {
+        // TODO  exception回避：java.lang.IllegalStateException:
+        //  Cannot create a session after the response has been committed
+        request.getSession();
         return mainService.initializeHandler();
     }
 
     // 予約関係
 
     @GetMapping("/api/settings")
-    public Settings settingsHandler() {
+    public Settings settingsHandler(HttpServletRequest request) {
+        request.getSession();
         return mainService.settingsHandler();
     }
 
     @GetMapping("/api/stations")
-    public List<StationMaster> getStationsHandler() {
+    public List<StationMaster> getStationsHandler(HttpServletRequest request) {
+        request.getSession();
         return mainService.getStationsHandler();
     }
 
@@ -50,12 +58,14 @@ public class mainController {
     */
     @GetMapping("/api/train/search")
     public List<TrainSearchResponse> trainSearchHandler(
+            HttpServletRequest request,
             @RequestParam("use_at") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime useAt,
             @RequestParam(name = "train_class", required = false) String trainClass,
             String from,
             String to,
             Integer adult,
             Integer child) {
+        request.getSession();
         return mainService.trainSearchHandler(useAt, trainClass, from, to, adult, child);
     }
 
@@ -65,6 +75,7 @@ public class mainController {
     */
     @GetMapping("/api/train/seats")
     public CarInformation trainSeatsHandler(
+            HttpServletRequest request,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime date,
             @RequestParam(name = "train_class") String trainClass,
             @RequestParam(name = "train_name") String trainName,
@@ -72,6 +83,7 @@ public class mainController {
             String from,
             String to
     ) {
+        request.getSession();
         return mainService.trainSeatsHandler(date, trainClass, trainName, carNumber, from, to);
     }
 
@@ -104,7 +116,10 @@ public class mainController {
         レスポンスで予約IDを返す;
     */
     @PostMapping("/api/train/reserve")
-    public TrainReservationResponse trainReservationHandler(@RequestBody TrainReservationRequest req) {
+    public TrainReservationResponse trainReservationHandler(
+            HttpServletRequest request,
+            @RequestBody TrainReservationRequest req) {
+        request.getSession();
         return mainService.trainReservationHandler(req);
     }
 
@@ -120,7 +135,10 @@ public class mainController {
         レスポンスは成功か否かのみ返す
     */
     @PostMapping("/api/train/reservation/commit")
-    public ReservationPaymentResponse reservationPaymentHandler(@RequestBody ReservationPaymentRequest req) {
+    public ReservationPaymentResponse reservationPaymentHandler(
+            HttpServletRequest request,
+            @RequestBody ReservationPaymentRequest req) {
+        request.getSession();
         return mainService.reservationPaymentHandler(req);
     }
 
@@ -130,9 +148,9 @@ public class mainController {
        POST /auth/signup
    */
     @PostMapping("/api/auth/signup")
-    public String signUpHandler(@RequestBody Users user) {
-        mainService.signUpHandler(user);
-        return "/api/auth/signup";
+    public MessageResponse signUpHandler(HttpServletRequest request, @RequestBody Users user) {
+        request.getSession();
+        return mainService.signUpHandler(user);
     }
 
     /*
@@ -140,16 +158,18 @@ public class mainController {
         POST /auth/login
     */
     @PostMapping("/api/auth/login")
-    public void loginHandler(@RequestBody Users postUser) {
-        mainService.loginHandler(postUser);
+    public MessageResponse loginHandler(HttpServletRequest request, @RequestBody Users postUser) {
+        request.getSession();
+        return mainService.loginHandler(postUser);
     }
 
     /*
        認証情報取得
-       GET /auth/login
+       GET /auth
     */
     @GetMapping("/api/auth")
-    public AuthResponse getAuthHandler() {
+    public AuthResponse getAuthHandler(HttpServletRequest request) {
+        request.getSession();
         return mainService.getAuthHandler();
     }
 
@@ -158,8 +178,12 @@ public class mainController {
         POST /auth/logout
     */
     @PostMapping("/api/auth/logout")
-    public void logoutHandler() {
-        mainService.logoutHandler();
+    public MessageResponse logoutHandler(HttpServletRequest request, SessionStatus sessionStatus) {
+        request.getSession();
+        MessageResponse messageResponse = mainService.logoutHandler();
+        sessionStatus.setComplete();
+
+        return messageResponse;
     }
 
     /*
@@ -167,7 +191,8 @@ public class mainController {
         GET /user/reservations
     */
     @GetMapping("/api/user/reservations")
-    public List<ReservationResponse> userReservationsHandler() {
+    public List<ReservationResponse> userReservationsHandler(HttpServletRequest request) {
+        request.getSession();
         return mainService.userReservationsHandler();
     }
 
@@ -176,7 +201,10 @@ public class mainController {
        POST /user/reservations/{item_id}
    */
     @GetMapping("/api/user/reservations/{item_id}")
-    public ReservationResponse userReservationResponseHandler(@PathVariable("item_id") Long itemId) {
+    public ReservationResponse userReservationResponseHandler(
+            HttpServletRequest request,
+            @PathVariable("item_id") Long itemId) {
+        request.getSession();
         return mainService.userReservationResponseHandler(itemId);
     }
 
@@ -185,7 +213,10 @@ public class mainController {
         POST /user/reservations/{item_id}/cancel
     */
     @PostMapping("/api/user/reservations/{item_id}/cancel")
-    public void userReservationCancelHandler(@PathVariable("item_id") Long itemId) {
-        mainService.userReservationCancelHandler(itemId);
+    public MessageResponse userReservationCancelHandler(
+            HttpServletRequest request,
+            @PathVariable("item_id") Long itemId) {
+        request.getSession();
+        return mainService.userReservationCancelHandler(itemId);
     }
 }
