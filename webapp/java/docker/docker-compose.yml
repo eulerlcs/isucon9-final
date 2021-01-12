@@ -1,37 +1,21 @@
 version: '3'
 
 services:
-
-  mysql8:
-    image: mysql:8
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    environment:
-      - "TZ=Asia/Tokyo"
-    env_file:
-      - "../../.env"
-    volumes:
-      - ../../mysql_data:/var/lib/mysql
-      - ../../sql:/docker-entrypoint-initdb.d
-      - ../../mysql/conf.d:/etc/mysql/conf.d
-    # development only
-    ports:
-      - "13306:3306"
-
   webapp:
     build:
       context: ..
-    image: isucon-9-final-java-webapp
+    image: eulerlcs/isucon-9-final-java-webapp
     ports:
       - "8000:8000"
     env_file:
       - "../../.env"
     environment:
-      - "MYSQL_HOSTNAME=mysql8"
+      - "MYSQL_HOSTNAME=mysql"
       - "MYSQL_PORT=3306"
-    depends_on:
-      - mysql8
-
-#networks:
+#    depends_on:
+#      - mysql
+#
+##networks:
 #  default:
 #    external: false
 #    name: isucon-9-final-java

@@ -10,13 +10,13 @@
     </parent>
     <groupId>jp.zhimingsoft.www.isucon</groupId>
     <artifactId>isucon-9-final</artifactId>
-    <version>0.0.1</version>
+    <version>1.0</version>
     <name>isucon-9-final</name>
     <description>try it</description>
 
     <properties>
         <java.version>11</java.version>
-        <docker.image.prefix></docker.image.prefix>
+        <docker.image.prefix>eulerlcs/</docker.image.prefix>
         <docker.image.name>isucon-9-final-java-webapp</docker.image.name>
         <docker.allowInsecureRegistries>false</docker.allowInsecureRegistries>
     </properties>
@@ -93,7 +93,12 @@
                         <image>${docker.image.prefix}${docker.image.name}</image>
                         <tags>
                             <tag>latest</tag>
+                            <tag>${project.version}</tag>
                         </tags>
+                        <auth>
+                            <username>${env.DOCKER.USER}</username>
+                            <password>${env.DOCKER.PASSWORD}</password>
+                        </auth>
                     </to>
 
                     <container>
