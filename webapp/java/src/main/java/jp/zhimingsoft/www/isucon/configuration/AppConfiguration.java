@@ -1,5 +1,6 @@
 package jp.zhimingsoft.www.isucon.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.zhimingsoft.www.isucon.dao.Marker;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
@@ -9,6 +10,7 @@ import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
@@ -18,9 +20,9 @@ import javax.sql.DataSource;
 public class AppConfiguration {
 
     @Bean
-    public RestTemplate restTemplate() {
+    public RestTemplate restTemplate(ObjectMapper objectMapper) {
         RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
-        return restTemplateBuilder.build();
+        return restTemplateBuilder.messageConverters(new MappingJackson2HttpMessageConverter(objectMapper)).build();
     }
 
 //    @Autowired

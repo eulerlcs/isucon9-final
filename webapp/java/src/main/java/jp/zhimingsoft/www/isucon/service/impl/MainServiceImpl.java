@@ -1,6 +1,5 @@
 package jp.zhimingsoft.www.isucon.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.zhimingsoft.www.isucon.dao.*;
 import jp.zhimingsoft.www.isucon.domain.*;
@@ -11,6 +10,7 @@ import jp.zhimingsoft.www.isucon.utils.SecureUtil;
 import jp.zhimingsoft.www.isucon.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -945,9 +945,9 @@ public class MainServiceImpl implements MainService {
                 break;
         }
 
-        // 決済する;
-        PaymentInformationRequest payInfo = new PaymentInformationRequest(req.getCardToken(), req.getReservationId(), reservation.getAmount().intValue());
-
+        // 決済する
+        PaymentInformationRequest paymentInformationRequest = new PaymentInformationRequest(req.getCardToken(), req.getReservationId(), reservation.getAmount().intValue());
+        PaymentInformation paymentInfo = new PaymentInformation(paymentInformationRequest);
         String payment_api = System.getenv("PAYMENT_API");
         if (!StringUtils.hasLength(payment_api)) {
             payment_api = "http://payment:5000";
@@ -955,25 +955,24 @@ public class MainServiceImpl implements MainService {
 
         ResponseEntity<PaymentResponse> resp = null;
         try {
-            // TODO 劉春生　動作確認NG
-            resp = restTemplate.postForEntity(payment_api + "/payment/", payInfo, PaymentResponse.class);
+            resp = restTemplate.postForEntity(payment_api + "/payment", paymentInfo, PaymentResponse.class);
         } catch (RestClientException e) {
             HttpStatus httpStatus = resp == null ? HttpStatus.INTERNAL_SERVER_ERROR : resp.getStatusCode();
             throw new IsuconException("HTTP POSTに失敗しました", httpStatus);
         }
 
-        // リクエスト失敗;
+        // リクエスト失敗
         if (!Objects.equals(resp.getStatusCode(), HttpStatus.OK)) {
             throw new IsuconException("決済に失敗しました。カードトークンや支払いIDが間違っている可能性があります", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // リクエスト取り出し;
+        // リクエスト取り出し
         PaymentResponse output = resp.getBody();
         if (output == null) {
             throw new IsuconException("JSON parseに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // 予約情報の更新;
+        // 予約情報の更新
         Reservations record = new Reservations();
         record.setReservationId(req.getReservationId().longValue());
         record.setStatus("done");
@@ -1209,27 +1208,34 @@ public class MainServiceImpl implements MainService {
         switch (reservation.getStatus()) {
             case "rejected":
                 throw new IsuconException("何らかの理由により予約はRejected状態です", HttpStatus.INTERNAL_SERVER_ERROR);
-            case "done":
-                // 支払いをキャンセルする;
-                CancelPaymentInformationRequest payInfo = new CancelPaymentInformationRequest(reservation.getPaymentId());
-                String j = null;
-                try {
-                    j = objectMapper.writeValueAsString(payInfo);
-                } catch (JsonProcessingException e) {
-                    throw new IsuconException("JSON Marshalに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
 
+            case "done":
+                // 支払いをキャンセルする
                 String payment_api = System.getenv("PAYMENT_API");
                 if (!StringUtils.hasLength(payment_api)) {
                     payment_api = "http://payment:5000";
                 }
 
+                ResponseEntity<CancelPaymentInformationResponse> resp = null;
                 try {
-                    // TODO 劉春生　動作未確認
-                    restTemplate.delete(payment_api + "/payment/" + reservation.getPaymentId());
+                    String url = payment_api + "/payment/" + reservation.getPaymentId();
+                    resp = restTemplate.exchange(url, HttpMethod.DELETE, null, CancelPaymentInformationResponse.class);
+
                 } catch (RestClientException e) {
                     throw new IsuconException("HTTPリクエストの作成に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+
+                // リクエスト失敗
+                if (!Objects.equals(resp.getStatusCode(), HttpStatus.OK)) {
+                    throw new IsuconException("決済のキャンセルに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                // リクエスト取り出し
+                CancelPaymentInformationResponse output = resp.getBody();
+                if (output == null) {
+                    throw new IsuconException("レスポンスの読み込みに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                log.info("{}", output);
 
                 break;
             default:

@@ -10,12 +10,12 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentInformationRequest implements Serializable {
-
+    //    @JsonProperty("card_token")
     private String cardToken;
 
-
+    //    @JsonProperty("reservation_id")
     private Integer reservationId;
 
-
+    //    @JsonProperty("amount")
     private Integer amount;
 }

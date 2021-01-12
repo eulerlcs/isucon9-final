@@ -13,6 +13,34 @@ docker-compose up -d
 mysql -u isutrain -p isutrain -h 127.0.0.1 -P 13306
 ```
 
+## payment api
+
+### /card
+
+```bash
+curl -i -H "Content-Type: application/json" -d "{\"card_information\":{\"card_number\":\"11111111\",\"cvv\":\"111\",\"expiry_date\":\"11/22\"}}" http://192.168.77.171:5000/card
+
+{"card_token":"b26ee197-67bf-4f8a-6c47-9ed79838bcb9","is_ok":true}
+```
+
+```bash
+curl -i -H "Content-Type: application/json" -d @api.card.json http://192.168.77.171:5000/card
+
+
+```
+
+api.card.json
+
+```json
+{
+	"card_information": {
+		"card_number":"111111",
+		"cvv": "111",
+      	"expiry_date": "11/22"
+	}
+}
+```
+
 
 
 ## test api
