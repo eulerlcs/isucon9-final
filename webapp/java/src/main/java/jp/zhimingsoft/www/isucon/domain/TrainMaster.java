@@ -1,5 +1,6 @@
 package jp.zhimingsoft.www.isucon.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,5 +50,6 @@ public class TrainMaster implements Serializable {
     /**
      * Column: is_nobori
      */
+    @JsonProperty("is_nobori")
     private boolean isNobori;
 }

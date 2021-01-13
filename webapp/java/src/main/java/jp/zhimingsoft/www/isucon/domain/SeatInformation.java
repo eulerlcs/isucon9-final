@@ -20,7 +20,9 @@ public class SeatInformation implements Serializable {
     @JsonProperty(value = "class")
     private String seatClass;
 
+    @JsonProperty(value = "is_smoking_seat")
     private boolean isSmokingSeat;
 
+    @JsonProperty(value = "is_occupied")
     private boolean isOccupied;
 }

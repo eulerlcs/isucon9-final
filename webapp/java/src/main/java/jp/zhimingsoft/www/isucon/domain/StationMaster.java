@@ -1,6 +1,7 @@
 package jp.zhimingsoft.www.isucon.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,15 +35,18 @@ public class StationMaster implements Serializable {
     /**
      * Column: is_stop_express
      */
+    @JsonProperty("is_stop_express")
     private boolean isStopExpress;
 
     /**
      * Column: is_stop_semi_express
      */
+    @JsonProperty("is_stop_semi_express")
     private boolean isStopSemiExpress;
 
     /**
      * Column: is_stop_local
      */
+    @JsonProperty("is_stop_local")
     private boolean isStopLocal;
 }
