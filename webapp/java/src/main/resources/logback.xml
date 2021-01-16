@@ -25,6 +25,25 @@
             <level>debug</level>
         </filter>
     </appender>
+    <appender name="METHOD_TIME_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_FILE_NAME}-method-time.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <FileNamePattern>{LOG_FILE_NAME}-method-time./%i.log</FileNamePattern>
+            <MinIndex>1</MinIndex>
+            <MaxIndex>9</MaxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%date - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="jp.zhimingsoft.www.isucon.log">
+        <appender-ref ref="METHOD_TIME_FILE"/>
+    </logger>
+
 
     <logger name="org.springframework">
         <level value="WARN"/>

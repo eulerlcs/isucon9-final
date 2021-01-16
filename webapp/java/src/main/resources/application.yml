@@ -4,7 +4,8 @@ server:
     session:
       cookie:
         name: session_isutrain
-
+  tomcat:
+    max-threads: 300
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
