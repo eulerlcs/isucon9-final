@@ -10,7 +10,6 @@ import jp.zhimingsoft.www.isucon.utils.SecureUtil;
 import jp.zhimingsoft.www.isucon.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -26,6 +25,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @Slf4j
@@ -59,6 +60,11 @@ public class MainServiceImpl implements MainService {
     private DistanceFareMasterDao distanceFareMasterDao;
     @Autowired
     private FareMasterDao fareMasterDao;
+
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    @Autowired
+    private PaymentCancelTask paymentCancelTask;
 
     /*
          initialize
@@ -1192,66 +1198,19 @@ public class MainServiceImpl implements MainService {
 
     /*
         予約取消
-        POST /user/reservations/{item_id}/cancel
+        POST /user/reservations/{reservation_id}/cancel
     */
     @Override
-    @Transactional
-    public MessageResponse userReservationCancelHandler(Long itemId) {
+    public MessageResponse userReservationCancelHandler(Long reservationId) {
         Users user = getUser();
 
-        Reservations reservation = reservationsDao.selectByReservationIdUserId(itemId, user.getId());
-        if (reservation == null) {
-            throw new IsuconException("reservations naiyo", HttpStatus.BAD_REQUEST);
-        }
-        log.info("CANCEL {} {} {}", reservation, itemId, user.getId());
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                paymentCancelTask.cancel(reservationId, user.getId());
+            }
+        });
 
-        switch (reservation.getStatus()) {
-            case "rejected":
-                throw new IsuconException("何らかの理由により予約はRejected状態です", HttpStatus.INTERNAL_SERVER_ERROR);
-
-            case "done":
-                // 支払いをキャンセルする
-                String payment_api = System.getenv("PAYMENT_API");
-                if (!StringUtils.hasLength(payment_api)) {
-                    payment_api = "http://payment:5000";
-                }
-
-                ResponseEntity<CancelPaymentInformationResponse> resp = null;
-                try {
-                    String url = payment_api + "/payment/" + reservation.getPaymentId();
-                    resp = restTemplate.exchange(url, HttpMethod.DELETE, null, CancelPaymentInformationResponse.class);
-
-                } catch (RestClientException e) {
-                    throw new IsuconException("HTTPリクエストの作成に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                // リクエスト失敗
-                if (!Objects.equals(resp.getStatusCode(), HttpStatus.OK)) {
-                    throw new IsuconException("決済のキャンセルに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                // リクエスト取り出し
-                CancelPaymentInformationResponse output = resp.getBody();
-                if (output == null) {
-                    throw new IsuconException("レスポンスの読み込みに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                log.info("{}", output);
-
-                break;
-            default:
-                // pass(requesting状態のものはpayment_id無いので叩かない);
-        }
-
-        int ret = reservationsDao.delete(itemId, user.getId());
-        if (ret <= 0) {
-            throw new IsuconException("error", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        ret = seatReservationsDao.delete(itemId);
-        if (ret <= 0) {
-            throw new IsuconException("seat naiyo", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return new MessageResponse("cancell complete");
+        return new MessageResponse("cancel is receipted");
     }
 }
