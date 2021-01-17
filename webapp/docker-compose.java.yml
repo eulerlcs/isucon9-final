@@ -8,6 +8,9 @@ services:
       - ".env"
     environment:
       - "PAYMENT_API"
+    volumes:
+      - ./java/src/main/resources/application.yml:/app/config/application.yml
+      - ./java/src/main/resources/application.yml:/app/resources/application.yml
     links:
       - payment
     ports:
