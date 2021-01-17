@@ -4,7 +4,7 @@ services:
   webapp:
     build:
       context: ..
-    image: eulerlcs/isucon-9-final-java-webapp
+    image: webapp-webapp
     ports:
       - "8000:8000"
     env_file:
@@ -12,6 +12,9 @@ services:
     environment:
       - "MYSQL_HOSTNAME=mysql"
       - "MYSQL_PORT=3306"
+    volumes:
+      - ../src/main/resources/application.yml:/app/config/application.yml
+      - ../src/main/resources/application.yml:/app/resources/application.yml
 #    depends_on:
 #      - mysql
 #

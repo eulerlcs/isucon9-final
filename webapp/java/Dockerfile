@@ -2,7 +2,7 @@ FROM amazoncorretto:11.0.8
 
 WORKDIR /app
 
-COPY target/isucon-9-final-1.2.jar isucon-9-final.jar
+COPY target/isucon-9-final-1.3.jar isucon-9-final.jar
 
 EXPOSE 8000
 
