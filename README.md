@@ -16,6 +16,7 @@
 * @ykzts 氏 (Ruby)
 * @kazeburo 氏 (Perl)
 * @shoma 氏 (PHP)
+* @eulerlcs 氏 (JAVA)
 
 (GolangとPythonはさくらインターネット実装です。)
 
@@ -42,10 +43,19 @@ cd isucon9-final
 (cd webapp/frontend && make)
 ```
 
-実装言語を指定してBuildとUpをする。
+java以外の場合、実装言語を指定してBuildとUpをする。
 
 ```bash
 export LANGUAGE=go
+docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.${LANGUAGE}.yml build
+docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.${LANGUAGE}.yml up
+```
+
+javaの場合、実装言語を指定してBuildとUpをする。
+
+```bash
+export LANGUAGE=java
+mvn -f webapp/java clean package -Dmaven.test.skip=true
 docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.${LANGUAGE}.yml build
 docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.${LANGUAGE}.yml up
 ```
@@ -100,3 +110,4 @@ ansible-playbook -i hosts -u root -s -c paramiko -D playbook.yml
 ### 修正済み
 
 * Ruby実装で、データベースの環境変数参照が誤っていた #211
+

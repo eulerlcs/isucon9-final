@@ -1,0 +1,1 @@
+create index train_timetable_master01 ON train_timetable_master (date, train_class, train_name, station);

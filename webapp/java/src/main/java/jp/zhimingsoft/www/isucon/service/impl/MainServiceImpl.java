@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jp.zhimingsoft.www.isucon.dao.*;
 import jp.zhimingsoft.www.isucon.domain.*;
 import jp.zhimingsoft.www.isucon.exception.IsuconException;
+import jp.zhimingsoft.www.isucon.log.LogExecutionTime;
 import jp.zhimingsoft.www.isucon.service.MainService;
 import jp.zhimingsoft.www.isucon.utils.MessageResponse;
 import jp.zhimingsoft.www.isucon.utils.SecureUtil;
 import jp.zhimingsoft.www.isucon.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -26,6 +26,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @Slf4j
@@ -60,10 +62,16 @@ public class MainServiceImpl implements MainService {
     @Autowired
     private FareMasterDao fareMasterDao;
 
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    @Autowired
+    private PaymentCancelTask paymentCancelTask;
+
     /*
          initialize
      */
     @Override
+    @LogExecutionTime
     public InitializeResponse initializeHandler() {
         seatReservationsDao.truncate();
         reservationsDao.truncate();
@@ -78,6 +86,7 @@ public class MainServiceImpl implements MainService {
     }
 
     @Override
+    @LogExecutionTime
     public Settings settingsHandler() {
         String paymentApi = System.getenv().getOrDefault("PAYMENT_API", "http://localhost:5000");
 
@@ -88,6 +97,7 @@ public class MainServiceImpl implements MainService {
     }
 
     @Override
+    @LogExecutionTime
     public List<StationMaster> getStationsHandler() {
         List<StationMaster> list = stationMasterDao.selectOrderByDistance(false);
 
@@ -104,6 +114,7 @@ public class MainServiceImpl implements MainService {
              発駅と着駅の到着時刻
      */
     @Override
+    @LogExecutionTime
     public List<TrainSearchResponse> trainSearchHandler(
             ZonedDateTime use_at,
             String trainClass,
@@ -367,6 +378,7 @@ public class MainServiceImpl implements MainService {
        GET /train/seats?date=2020-03-01&train_class=のぞみ&train_name=96号&car_number=2&from=大阪&to=東京
    */
     @Override
+    @LogExecutionTime
     public CarInformation trainSeatsHandler(ZonedDateTime use_at,
                                             String trainClass,
                                             String trainName,
@@ -503,6 +515,7 @@ public class MainServiceImpl implements MainService {
 	*/
     @Override
     @Transactional
+    @LogExecutionTime
     public TrainReservationResponse trainReservationHandler(TrainReservationRequest req) {
         // 乗車日の日付表記統一;
         ZonedDateTime date = req.getDate().withZoneSameInstant(ZoneOffset.ofHours(9));
@@ -923,6 +936,7 @@ public class MainServiceImpl implements MainService {
 	*/
     @Override
     @Transactional
+    @LogExecutionTime
     public ReservationPaymentResponse reservationPaymentHandler(ReservationPaymentRequest req) {
         // 予約IDで検索;
         Reservations reservation = reservationsDao.selectByReservationId(req.getReservationId().longValue());
@@ -1009,6 +1023,7 @@ public class MainServiceImpl implements MainService {
         POST /auth/login
     */
     @Override
+    @LogExecutionTime
     public MessageResponse loginHandler(Users postUser) {
         Users user = usersDao.selectByEmail(postUser.getEmail());
         if (user == null) {
@@ -1034,6 +1049,7 @@ public class MainServiceImpl implements MainService {
    */
     @Override
     @Transactional
+    @LogExecutionTime
     public MessageResponse signUpHandler(Users postUser) {
         // TODO: validation;
         byte[] salt = SecureUtil.generateSalt(1024);
@@ -1061,6 +1077,7 @@ public class MainServiceImpl implements MainService {
        GET /auth
     */
     @Override
+    @LogExecutionTime
     public AuthResponse getAuthHandler() {
         Users user = getUser();
 
@@ -1073,6 +1090,7 @@ public class MainServiceImpl implements MainService {
         POST /auth/logout
     */
     @Override
+    @LogExecutionTime
     public MessageResponse logoutHandler() {
         session.setAttribute("user_id", 0L);
         return new MessageResponse("logged out");
@@ -1083,6 +1101,7 @@ public class MainServiceImpl implements MainService {
         GET /user/reservations
     */
     @Override
+    @LogExecutionTime
     public List<ReservationResponse> userReservationsHandler() {
         Users user = getUser();
 
@@ -1173,6 +1192,7 @@ public class MainServiceImpl implements MainService {
         POST /user/reservations/{item_id}
     */
     @Override
+    @LogExecutionTime
     public ReservationResponse userReservationResponseHandler(Long itemId) {
         Users user = getUser();
 
@@ -1192,66 +1212,20 @@ public class MainServiceImpl implements MainService {
 
     /*
         予約取消
-        POST /user/reservations/{item_id}/cancel
+        POST /user/reservations/{reservation_id}/cancel
     */
     @Override
-    @Transactional
-    public MessageResponse userReservationCancelHandler(Long itemId) {
+    @LogExecutionTime
+    public MessageResponse userReservationCancelHandler(Long reservationId) {
         Users user = getUser();
 
-        Reservations reservation = reservationsDao.selectByReservationIdUserId(itemId, user.getId());
-        if (reservation == null) {
-            throw new IsuconException("reservations naiyo", HttpStatus.BAD_REQUEST);
-        }
-        log.info("CANCEL {} {} {}", reservation, itemId, user.getId());
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                paymentCancelTask.cancel(reservationId, user.getId());
+            }
+        });
 
-        switch (reservation.getStatus()) {
-            case "rejected":
-                throw new IsuconException("何らかの理由により予約はRejected状態です", HttpStatus.INTERNAL_SERVER_ERROR);
-
-            case "done":
-                // 支払いをキャンセルする
-                String payment_api = System.getenv("PAYMENT_API");
-                if (!StringUtils.hasLength(payment_api)) {
-                    payment_api = "http://payment:5000";
-                }
-
-                ResponseEntity<CancelPaymentInformationResponse> resp = null;
-                try {
-                    String url = payment_api + "/payment/" + reservation.getPaymentId();
-                    resp = restTemplate.exchange(url, HttpMethod.DELETE, null, CancelPaymentInformationResponse.class);
-
-                } catch (RestClientException e) {
-                    throw new IsuconException("HTTPリクエストの作成に失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                // リクエスト失敗
-                if (!Objects.equals(resp.getStatusCode(), HttpStatus.OK)) {
-                    throw new IsuconException("決済のキャンセルに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                // リクエスト取り出し
-                CancelPaymentInformationResponse output = resp.getBody();
-                if (output == null) {
-                    throw new IsuconException("レスポンスの読み込みに失敗しました", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                log.info("{}", output);
-
-                break;
-            default:
-                // pass(requesting状態のものはpayment_id無いので叩かない);
-        }
-
-        int ret = reservationsDao.delete(itemId, user.getId());
-        if (ret <= 0) {
-            throw new IsuconException("error", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        ret = seatReservationsDao.delete(itemId);
-        if (ret <= 0) {
-            throw new IsuconException("seat naiyo", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return new MessageResponse("cancell complete");
+        return new MessageResponse("cancel is receipted");
     }
 }

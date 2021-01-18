@@ -4,11 +4,12 @@ server:
     session:
       cookie:
         name: session_isutrain
-
+  tomcat:
+    max-threads: 300
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOSTNAME:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:isutrain}?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
+    url: jdbc:mysql://${MYSQL_HOSTNAME:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:isutrain}?useUnicode=true&useSSL=true&useCharacterEncoding=utf-8&serverTimezone=JST
     username: ${MYSQL_USER:isutrain}
     password: ${MYSQL_PASSWORD:isutrain}
 
@@ -19,7 +20,7 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
-
+#    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 logging:
   level:
     root: debug
