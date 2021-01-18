@@ -11,6 +11,7 @@ services:
     volumes:
       - ./java/src/main/resources/application.yml:/app/config/application.yml
       - ./java/src/main/resources/application.yml:/app/resources/application.yml
+      - /var/log/app/:/app/log/
     links:
       - payment
     ports:
