@@ -231,7 +231,3 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
-
-
-# 2021.01.05 added by ryu
-webapp/mysql_data/**

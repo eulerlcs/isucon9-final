@@ -15,7 +15,7 @@
     <description>
         v1.1 - 処理取消を非同期にする
         v1.2 - time method
-        v1.3 - add volume: application.yml
+        v1.3 - docker関連修正
     </description>
 
     <properties>

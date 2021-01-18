@@ -1,0 +1,716 @@
+{
+	"info": {
+		"_postman_id": "8d1ab9dd-b858-4e4e-aefc-fafbc26fa89e",
+		"name": "isucon-9-final",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "初期化",
+			"item": [
+				{
+					"name": "/initialize",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/initialize",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"initialize"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/settings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Your test name\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.payment_api).to.eql(pm.environment.get(\"PAYMENT_URL\"));\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/settings",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"settings"
+							]
+						},
+						"description": "s"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "検索",
+			"item": [
+				{
+					"name": "/api/stations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Your test name\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    console.log(jsonData.length);\r",
+									"    pm.expect(jsonData.length).to.eql(82);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/stations",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"stations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/train/search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/train/search?use_at=2020-01-01T06:00:00%2B09:00&from=東京&to=大阪&adult=1&child=3",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"train",
+								"search"
+							],
+							"query": [
+								{
+									"key": "use_at",
+									"value": "2020-01-01T06:00:00%2B09:00"
+								},
+								{
+									"key": "from",
+									"value": "東京"
+								},
+								{
+									"key": "to",
+									"value": "大阪"
+								},
+								{
+									"key": "adult",
+									"value": "1"
+								},
+								{
+									"key": "child",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/train/seats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/train/search?use_at=2020-01-01T06:00:00%2B09:00&train_class=最速&train_name=3&car_number=4&from=東京&to=大阪&adult=1&child=3",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"train",
+								"search"
+							],
+							"query": [
+								{
+									"key": "use_at",
+									"value": "2020-01-01T06:00:00%2B09:00"
+								},
+								{
+									"key": "train_class",
+									"value": "最速"
+								},
+								{
+									"key": "train_name",
+									"value": "3"
+								},
+								{
+									"key": "car_number",
+									"value": "4"
+								},
+								{
+									"key": "from",
+									"value": "東京"
+								},
+								{
+									"key": "to",
+									"value": "大阪"
+								},
+								{
+									"key": "adult",
+									"value": "1"
+								},
+								{
+									"key": "child",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "認証関連",
+			"item": [
+				{
+					"name": "/api/auth/signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"registration complete\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.is_error).to.eql(false);\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\":\"ryu02@zsj.com\",\"password\":\"123456\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/auth/signup",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/auth/login",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"TOKEN\", \"\");\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"autheticated\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.is_error).to.eql(false);\r",
+									"});\r",
+									"\r",
+									"pm.environment.set(\"TOKEN\", pm.cookies.get(\"session_isutrain\"));\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableCookies": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\":\"ryu02@zsj.com\",\"password\":\"123456\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/auth/login",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/auth",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/auth",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"auth"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payment",
+			"item": [
+				{
+					"name": "{{PAYMENT_URL}}/card",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.environment.set(\"card_token\",  pm.response.json().card_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"card_information\": {\r\n        \"card_number\": \"66543235\",\r\n        \"cvv\": \"363\",\r\n        \"expiry_date\": \"01/24\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PAYMENT_URL}}/card",
+							"host": [
+								"{{PAYMENT_URL}}"
+							],
+							"path": [
+								"card"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "予約・取消",
+			"item": [
+				{
+					"name": "/api/train/reserve",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Your test name\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.is_ok).to.eql(true);\r",
+									"    pm.environment.set(\"reservation_id\", jsonData.reservation_id);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "session_isutrain",
+								"value": "CE6B972C938A4BBC5FA0060475BCE466",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"date\": \"2019-12-31T15:00:00.000Z\",\r\n    \"train_class\": \"最速\",\r\n    \"train_name\": \"1\",\r\n    \"car_number\": 0,\r\n    \"seat_class\": \"reserved\",\r\n    \"departure\": \"東京\",\r\n    \"arrival\": \"大阪\",\r\n    \"child\": 0,\r\n    \"adult\": 1,\r\n    \"column\": \"\",\r\n    \"seats\": []\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/train/reserve",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"train",
+								"reserve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/user/reservations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "session_isutrain",
+								"type": "text",
+								"value": "CE6B972C938A4BBC5FA0060475BCE466"
+							}
+						],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/user/reservations",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"reservations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/user/reservations/{{reservation_id}}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "session_isutrain",
+								"type": "text",
+								"value": "CE6B972C938A4BBC5FA0060475BCE466"
+							}
+						],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/user/reservations/{{reservation_id}}",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"reservations",
+								"{{reservation_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/train/reservation/commit",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "session_isutrain",
+								"type": "text",
+								"value": "CE6B972C938A4BBC5FA0060475BCE466"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"reservation_id\":\"{{reservation_id}}\",\"card_token\":\"{{card_token}}\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/train/reservation/commit",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"train",
+								"reservation",
+								"commit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/api/user/reservations/{{reservation_id}}/cancel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Your test name\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.is_error).to.eql(false);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "session_isutrain",
+								"type": "text",
+								"value": "CE6B972C938A4BBC5FA0060475BCE466"
+							}
+						],
+						"url": {
+							"raw": "{{WEB_APP_URL}}/api/user/reservations/{{reservation_id}}/cancel",
+							"host": [
+								"{{WEB_APP_URL}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"reservations",
+								"{{reservation_id}}",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/api/auth/logout",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Your test name\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.is_error).to.eql(false);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{WEB_APP_URL}}/api/auth/logout",
+					"host": [
+						"{{WEB_APP_URL}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

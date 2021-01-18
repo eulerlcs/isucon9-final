@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+
+# 2021.01.05 added by ryu
+docker/msql8_single.data/**
+docker/mysql8.data/**
+docker/app.log/**
