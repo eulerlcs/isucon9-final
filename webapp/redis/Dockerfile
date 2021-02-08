@@ -1,6 +1,6 @@
 FROM redis:6.0.10
 
-COPY ./config/redis.conf /usr/local/etc/redis/redis.conf
+COPY ./conf.d/redis.conf /usr/local/etc/redis/redis.conf
 
 RUN set -x && \
     touch /var/log/redis.log && \

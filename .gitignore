@@ -235,3 +235,5 @@ typings/
 # 2021.01.05 added by ryu
 zsj-test/docker/msql8_single.data/**
 **/.vscode
+**/.idea
+**/__debug_bin
