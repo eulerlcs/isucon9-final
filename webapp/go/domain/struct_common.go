@@ -10,7 +10,7 @@ import (
 type Station struct {
 	ID                int     `json:"id" db:"id"`
 	Name              string  `json:"name" db:"name"`
-	Distance          float64 `json:"-" db:"distance"`
+	Distance          float64 `json:"distance" db:"distance"`
 	IsStopExpress     bool    `json:"is_stop_express" db:"is_stop_express"`
 	IsStopSemiExpress bool    `json:"is_stop_semi_express" db:"is_stop_semi_express"`
 	IsStopLocal       bool    `json:"is_stop_local" db:"is_stop_local"`

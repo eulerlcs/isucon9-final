@@ -92,6 +92,66 @@ func initCacheTrainList() ([]domain.Train, error) {
 //	return trainList
 //}
 
+/*
+var cacheStationList []domain.Station = nil
+var cacheStationListOrderById []domain.Station = nil
+var cacheStationListOrderByDistanceAsc []domain.Station = nil
+var cacheStationListOrderByDistanceDesc []domain.Station = nil
+
+var cacheStationMapById = make(map[int]domain.Station)
+var cacheStationMapByName = make(map[string]domain.Station)
+
+func initCacheStationList() ([]domain.Station, error) {
+	var dbx = (&utils.MYSQL{}).GetDB()
+	defer dbx.Close()
+
+	cacheStationList = []domain.Station{}
+
+	query := "SELECT * FROM station_master"
+	err := dbx.Select(&cacheStationList, query)
+
+	if err != nil {
+		log.Print(err.Error())
+		return cacheStationList, err
+	}
+
+	cacheStationListOrderById = make([]domain.Station, len(cacheStationList))
+	copy(cacheStationListOrderById, cacheStationList)
+	sort.SliceStable(cacheStationListOrderById, func(i, j int) bool {
+		return cacheStationListOrderById[i].ID < cacheStationListOrderById[j].ID
+	})
+
+	log.Println("=====cacheStationListOrderById====")
+	//for _, v := range cacheStationListOrderById {
+	//	log.Println(v)
+	//}
+
+	cacheStationListOrderByDistanceAsc = make([]domain.Station, len(cacheStationList))
+	copy(cacheStationListOrderByDistanceAsc, cacheStationList)
+	sort.SliceStable(cacheStationListOrderByDistanceAsc, func(i, j int) bool {
+		return cacheStationListOrderByDistanceAsc[i].Distance < cacheStationListOrderByDistanceAsc[j].Distance
+	})
+
+	cacheStationListOrderByDistanceDesc = make([]domain.Station, len(cacheStationList))
+	copy(cacheStationListOrderByDistanceDesc, cacheStationList)
+	sort.SliceStable(cacheStationListOrderByDistanceDesc, func(i, j int) bool {
+		return cacheStationListOrderByDistanceDesc[i].Distance > cacheStationListOrderByDistanceDesc[j].Distance
+	})
+
+	log.Println("=====cacheStationListOrderByDistance====")
+	//for _, v := range cacheStationListOrderByDistance {
+	//	log.Println(v)
+	//}
+
+	for _, v := range cacheStationList {
+		cacheStationMapById[v.ID] = v
+		cacheStationMapByName[v.Name] = v
+	}
+
+	return cacheStationList, err
+}
+*/
+
 var cacheSeatList []domain.Seat = nil
 
 func initCacheSeatList() ([]domain.Seat, error) {
@@ -319,6 +379,7 @@ func GetAvailableSeats(train domain.Train, fromStation domain.Station, toStation
 }
 
 func InitCache() {
+	//initCacheStationList()
 	initCacheSeatList()
 	initCacheDistanceFareList()
 	initCacheFareList()
