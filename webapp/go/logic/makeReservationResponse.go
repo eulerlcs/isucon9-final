@@ -7,8 +7,7 @@ import (
 )
 
 func makeReservationResponse(reservation domain.Reservation) (domain.ReservationResponse, error) {
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	reservationResponse := domain.ReservationResponse{}
 

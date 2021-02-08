@@ -22,22 +22,17 @@ var (
 )
 
 func main() {
-	wg.Add(2)
-
-	go configRedis()
-	go configMysql()
-
-	wg.Wait()
+	prepareServers()
 
 	redisStore15 := (&utils.REDIS{}).GetRedisStore(15)
 	session.InitManager(
 		session.SetStore(redisStore15),
 	)
 
-	log.Println("init cache begin...")
+	log.Println("ZSJ - init cache begin...")
 	go dbCacheSiJian.InitCache()
 	go dbCache.DoCacheAll()
-	log.Println("init cache end.")
+	log.Println("ZSJ - init cache end.")
 
 	routing()
 }
@@ -45,15 +40,10 @@ func main() {
 //var (
 //	store sessions.Store = sessions.NewCookieStore([]byte(secureRandomStr(20)))
 //)
-func configRedis() {
-	(&utils.REDIS{}).WaitOK()
-
-	wg.Done()
-}
-
-func configMysql() {
+func prepareServers() {
+	// mysql、redisの順で起動を確認する
 	(&utils.MYSQL{}).WaitOK()
-	wg.Done()
+	(&utils.REDIS{}).WaitOK()
 }
 
 func routing() {

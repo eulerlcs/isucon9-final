@@ -12,25 +12,35 @@ import (
 
 type MYSQL struct{}
 
+var Dbx *sqlx.DB
+
 func (myMysql *MYSQL) WaitOK() {
-	dbx := myMysql.GetDB()
-	defer dbx.Close()
+	if Dbx != nil {
+		return
+	} else {
+		Dbx = myMysql.getDBX()
+	}
 }
 
-func (myMysql *MYSQL) GetDB(timeout ...time.Duration) *sqlx.DB {
+func (myMysql *MYSQL) getDBX(timeout ...time.Duration) *sqlx.DB {
 	spentTime := 0 * time.Second
 	waitTime := WaitTimeMax
 	if len(timeout) > 0 {
 		waitTime = timeout[0]
 	}
 
+	var err error
+	var localDbx *sqlx.DB
 	for {
-		dbx, err := myMysql.doGetDB()
+		localDbx, err = myMysql.doGetDB()
 		if err == nil || spentTime > waitTime {
-			log.Println("succeeded to connect to DB")
-			return dbx
+			log.Println("ZSJ - succeeded to connect to mysql.")
+			return localDbx
 		} else {
-			log.Printf("failed to connect to DB: %s.\n", err.Error())
+			log.Printf("failed to connect to mysql: %s.\n", err.Error())
+			if localDbx != nil {
+				localDbx.Close()
+			}
 
 			time.Sleep(InitCheckInterval)
 			spentTime += InitCheckInterval
@@ -75,15 +85,21 @@ func (myMysql *MYSQL) doGetDB() (*sqlx.DB, error) {
 		dbname,
 	)
 
-	db, err := sqlx.Open("mysql", dsn)
+	localDbx, err := sqlx.Open("mysql", dsn)
 	if err != nil {
+		if localDbx != nil {
+			localDbx.Close()
+		}
 		return nil, err
 	}
 
-	err = db.Ping()
+	err = localDbx.Ping()
 	if err != nil {
+		if localDbx != nil {
+			localDbx.Close()
+		}
 		return nil, err
 	}
 
-	return db, err
+	return localDbx, err
 }

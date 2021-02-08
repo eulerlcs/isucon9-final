@@ -52,8 +52,7 @@ var CacheTrainMapByDateClassName = make(map[string][]domain.Train)
 func initCacheTrainList() ([]domain.Train, error) {
 	log.Println("=====initCacheTrainList====")
 
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	cacheTrainList = []domain.Train{}
 
@@ -157,8 +156,7 @@ var cacheSeatList []domain.Seat = nil
 func initCacheSeatList() ([]domain.Seat, error) {
 	log.Println("=====initCacheSeatList====")
 
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	cacheSeatList = []domain.Seat{}
 
@@ -254,8 +252,7 @@ var CacheDistanceFareList []domain.DistanceFare = nil
 func initCacheDistanceFareList() ([]domain.DistanceFare, error) {
 	log.Println("=====initCacheDistanceFareList====")
 
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	CacheDistanceFareList = []domain.DistanceFare{}
 
@@ -281,8 +278,7 @@ var cacheFareList []domain.Fare = nil
 func initCacheFareList() ([]domain.Fare, error) {
 	log.Println("=====initCacheFareList====")
 
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	cacheFareList = []domain.Fare{}
 
@@ -320,8 +316,7 @@ func SelectFareBy(trainClass string, seatClass string) []domain.Fare {
 func GetAvailableSeats(train domain.Train, fromStation domain.Station, toStation domain.Station, seatClass string, isSmokingSeat bool) ([]domain.Seat, error) {
 	// 指定種別の空き座席を返す
 
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	var err error
 

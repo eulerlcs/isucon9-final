@@ -24,8 +24,7 @@ func ReservationPaymentHandler(w http.ResponseWriter, r *http.Request) {
 		前段でフロントがクレカ非保持化対応用のpayment-APIを叩き、card_tokenを手に入れている必要がある
 		レスポンスは成功か否かのみ返す
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	// json parse
 	req := new(domain.ReservationPaymentRequest)

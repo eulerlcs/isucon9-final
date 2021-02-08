@@ -6,13 +6,13 @@ import (
 )
 
 var (
-	InitCheckInterval = time.Millisecond
-	WaitTimeMax       = 20 * time.Minute
+	InitCheckInterval = 500 * time.Millisecond
+	WaitTimeMax       = 120 * time.Minute
 )
 
 func IsCached(field string) bool {
-	redis0 := (&REDIS{}).GetRedisClient(0)
-	pipe := redis0.Pipeline()
+	redis1 := RedisClient1
+	pipe := redis1.Pipeline()
 	result := pipe.HSetNX("init:status", field, "1")
 	pipe.Exec()
 

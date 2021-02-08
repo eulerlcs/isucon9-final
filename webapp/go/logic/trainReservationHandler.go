@@ -43,8 +43,7 @@ func TrainReservationHandler(w http.ResponseWriter, r *http.Request) {
 		レスポンスで予約IDを返す
 		reservationResponse(w http.ResponseWriter, errCode int, id int, ok bool, message string)
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	var stationMasterDao dbCache.StationMasterDao
 

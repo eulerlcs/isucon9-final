@@ -10,8 +10,7 @@ import (
 
 func GetAvailableSeatsRyu01(train domain.TrainSearchResponseWork, fromStationID int, toStationID int, seatClass string, isSmokingSeat bool) ([]domain.Seat, error) {
 	// 指定種別の空き座席を返す
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	var err error
 

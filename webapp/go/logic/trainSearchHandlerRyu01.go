@@ -12,8 +12,7 @@ import (
 )
 
 func trainSearchHandlerRyu01SelectTrainList(date time.Time, trainClass string, manStartStation string, manArrivalStation string) ([]domain.TrainSearchResponseWork, error) {
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	sql := `
 SELECT

@@ -34,8 +34,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		ユーザー登録
 		POST /auth/signup
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	defer r.Body.Close()
 	buf, _ := ioutil.ReadAll(r.Body)
@@ -72,8 +71,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		ログイン
 		POST /auth/login
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	defer r.Body.Close()
 	buf, _ := ioutil.ReadAll(r.Body)

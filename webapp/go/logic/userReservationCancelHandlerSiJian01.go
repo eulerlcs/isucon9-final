@@ -18,8 +18,7 @@ import (
 )
 
 func UserReservationCancelHandlerSiJian01(w http.ResponseWriter, r *http.Request) {
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	user, errCode, errMsg := getUser(w, r)
 	if errCode != http.StatusOK {

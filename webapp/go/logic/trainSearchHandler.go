@@ -24,8 +24,7 @@ func TrainSearchHandler(w http.ResponseWriter, r *http.Request) {
 			発駅と着駅の到着時刻
 
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	var stationMasterDao dbCache.StationMasterDao
 

@@ -52,8 +52,7 @@ func getSession(w http.ResponseWriter, r *http.Request) session.Store {
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) (user domain.User, errCode int, errMsg string) {
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	sessionstore := getSession(w, r)
 

@@ -17,8 +17,7 @@ func UserReservationResponseHandler(w http.ResponseWriter, r *http.Request) {
 		ログイン
 		POST /auth/login
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	user, errCode, errMsg := getUser(w, r)
 	if errCode != http.StatusOK {

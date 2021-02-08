@@ -21,9 +21,7 @@ func InitializeHandler(w http.ResponseWriter, r *http.Request) {
 	/*
 		initialize
 	*/
-
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	dbx.Exec("TRUNCATE seat_reservations")
 	dbx.Exec("TRUNCATE reservations")

@@ -19,8 +19,7 @@ func TrainSeatsHandler(w http.ResponseWriter, r *http.Request) {
 		指定した列車の座席列挙
 		GET /train/seats?date=2020-03-01&train_class=のぞみ&train_name=96号&car_number=2&from=大阪&to=東京
 	*/
-	var dbx = (&utils.MYSQL{}).GetDB()
-	defer dbx.Close()
+	var dbx = utils.Dbx
 
 	var stationMasterDao dbCache.StationMasterDao
 

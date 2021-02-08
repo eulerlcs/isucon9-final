@@ -11,17 +11,31 @@ import (
 
 type REDIS struct{}
 
+var RedisClient1 *redis.Client
+
 var (
 	redisHost string
 	redisPort string
 )
 
 func (myRedis *REDIS) WaitOK() {
-	client := myRedis.GetRedisClient(0)
-	defer client.Close()
+	if RedisClient1 != nil {
+		return
+	} else {
+		RedisClient1 = myRedis.getRedisClient(1)
+	}
 }
 
-func (myRedis *REDIS) GetRedisClient(db int, timeout ...time.Duration) *redis.Client {
+func (myRedis *REDIS) GetRedisStore(db int) session.ManagerStore {
+	store := sessionRedis.NewRedisStore(&sessionRedis.Options{
+		Addr: redisHost + ":" + redisPort,
+		DB:   db,
+	})
+
+	return store
+}
+
+func (myRedis *REDIS) getRedisClient(db int, timeout ...time.Duration) *redis.Client {
 	redisHost = os.Getenv("REDIS_HOST")
 	if redisHost == "" {
 		redisHost = "127.0.0.1"
@@ -32,12 +46,6 @@ func (myRedis *REDIS) GetRedisClient(db int, timeout ...time.Duration) *redis.Cl
 		redisPort = "6379"
 	}
 
-	newClient := redis.NewClient(&redis.Options{
-		Addr:     redisHost + ":" + redisPort,
-		Password: "",
-		DB:       db,
-	})
-
 	spentTime := 0 * time.Second
 	waitTime := WaitTimeMax
 	if len(timeout) > 0 {
@@ -45,26 +53,31 @@ func (myRedis *REDIS) GetRedisClient(db int, timeout ...time.Duration) *redis.Cl
 	}
 
 	for {
-		_, err := newClient.Ping().Result()
+		newClient := redis.NewClient(&redis.Options{
+			Addr:     redisHost + ":" + redisPort,
+			Password: "",
+			DB:       db,
+		})
 
-		if err == nil || spentTime > waitTime {
-			break
+		_, err := newClient.Ping().Result()
+		if err == nil {
+			log.Println("ZSJ - succeeded to connect to redis.")
+			return newClient
 		} else {
 			log.Printf("failed to connect to redis: %s\n", err.Error())
+
+			if newClient != nil {
+				newClient.Close()
+			}
+
+			if spentTime > waitTime {
+				return nil
+			}
 
 			time.Sleep(InitCheckInterval)
 			spentTime += InitCheckInterval
 		}
 	}
 
-	return newClient
-}
-
-func (myRedis *REDIS) GetRedisStore(db int) session.ManagerStore {
-	store := sessionRedis.NewRedisStore(&sessionRedis.Options{
-		Addr: redisHost + ":" + redisPort,
-		DB:   db,
-	})
-
-	return store
+	return nil
 }
