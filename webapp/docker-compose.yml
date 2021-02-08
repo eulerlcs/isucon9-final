@@ -41,7 +41,7 @@ services:
       TZ: Asia/Tokyo
     volumes:
       - ../../isucon-09-final-data/redis/data:/data
-      - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/conf.d/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
     tty: true
