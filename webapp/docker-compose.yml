@@ -11,6 +11,8 @@ services:
     ports:
       - "8080:80"
       - "5000:5000"
+    networks:
+      - isucon-09-final-network
     links:
       - "webapp"
       - "payment"
@@ -23,13 +25,32 @@ services:
     env_file:
       - ".env"
     volumes:
-      - mysql:/var/lib/mysql
+      - ../../isucon-09-final-data/mysql/data:/var/lib/mysql
+      - ../../isucon-09-final-data/mysql/log:/var/log/mysql
       - ./sql:/docker-entrypoint-initdb.d
       - ./mysql/conf.d:/etc/mysql/conf.d
-      - /var/log/mysql:/var/log/mysql
     # development only
     ports:
       - "13306:3306"
+    networks:
+      - isucon-09-final-network
+
+  redis:
+#    restart: always
+    image: "eulerlcs-redis:6.0.10"
+    container_name: redis-server
+    build:
+      context: ./redis/
+    environment:
+      TZ: Asia/Tokyo
+    volumes:
+      - ../../isucon-09-final-data/redis/data:/data
+      - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - 6379:6379
+    networks:
+      - isucon-09-final-network
+    tty: true
 
   payment:
     image: golang:1.12
@@ -44,6 +65,8 @@ services:
     working_dir: /go/src/payment
     env_file:
       - ".env"
+    networks:
+      - isucon-09-final-network
 
   # development only
   phpmyadmin:
@@ -59,6 +82,9 @@ services:
        - 8082:80
     volumes:
        - /sessions
+    networks:
+      - isucon-09-final-network
 
-volumes:
-  mysql:
+networks:
+  isucon-09-final-network:
+    driver: bridge

@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -1951,6 +1952,8 @@ func userReservationResponseHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reservationResponse)
 }
 
+var wg sync.WaitGroup
+
 func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 	user, errCode, errMsg := getUser(r)
 	if errCode != http.StatusOK {
@@ -1964,26 +1967,36 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	wg.Add(1)
+	go cancel(itemID, user.ID)
+
+	//messageResponse(w, "cancell complete")
+	messageResponse(w, "cancell recieved")
+}
+
+func cancel(itemID int64, userID int64) {
+	defer wg.Done()
+
 	tx := dbx.MustBegin()
 
 	reservation := Reservation{}
 	query := "SELECT * FROM reservations WHERE reservation_id=? AND user_id=?"
-	err = tx.Get(&reservation, query, itemID, user.ID)
-	fmt.Println("CANCEL", reservation, itemID, user.ID)
+	err := tx.Get(&reservation, query, itemID, userID)
+	fmt.Println("CANCEL", reservation, itemID, userID)
 	if err == sql.ErrNoRows {
 		tx.Rollback()
-		errorResponse(w, http.StatusBadRequest, "reservations naiyo")
+		//	errorResponse(w, http.StatusBadRequest, "reservations naiyo")
 		return
 	}
 	if err != nil {
 		tx.Rollback()
-		errorResponse(w, http.StatusInternalServerError, "予約情報の検索に失敗しました")
+		//	errorResponse(w, http.StatusInternalServerError, "予約情報の検索に失敗しました")
 	}
 
 	switch reservation.Status {
 	case "rejected":
 		tx.Rollback()
-		errorResponse(w, http.StatusInternalServerError, "何らかの理由により予約はRejected状態です")
+		//	errorResponse(w, http.StatusInternalServerError, "何らかの理由により予約はRejected状態です")
 		return
 	case "done":
 		// 支払いをキャンセルする
@@ -1991,7 +2004,7 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 		j, err := json.Marshal(payInfo)
 		if err != nil {
 			tx.Rollback()
-			errorResponse(w, http.StatusInternalServerError, "JSON Marshalに失敗しました")
+			//		errorResponse(w, http.StatusInternalServerError, "JSON Marshalに失敗しました")
 			log.Println(err.Error())
 			return
 		}
@@ -2005,14 +2018,14 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 		req, err := http.NewRequest("DELETE", payment_api+"/payment/"+reservation.PaymentId, bytes.NewBuffer(j))
 		if err != nil {
 			tx.Rollback()
-			errorResponse(w, http.StatusInternalServerError, "HTTPリクエストの作成に失敗しました")
+			//	errorResponse(w, http.StatusInternalServerError, "HTTPリクエストの作成に失敗しました")
 			log.Println(err.Error())
 			return
 		}
 		resp, err := client.Do(req)
 		if err != nil {
 			tx.Rollback()
-			errorResponse(w, resp.StatusCode, "HTTP DELETEに失敗しました")
+			//		errorResponse(w, resp.StatusCode, "HTTP DELETEに失敗しました")
 			log.Println(err.Error())
 			return
 		}
@@ -2021,7 +2034,7 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 		// リクエスト失敗
 		if resp.StatusCode != http.StatusOK {
 			tx.Rollback()
-			errorResponse(w, http.StatusInternalServerError, "決済のキャンセルに失敗しました")
+			//	errorResponse(w, http.StatusInternalServerError, "決済のキャンセルに失敗しました")
 			log.Println(resp.StatusCode)
 			return
 		}
@@ -2029,7 +2042,7 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			tx.Rollback()
-			errorResponse(w, http.StatusInternalServerError, "レスポンスの読み込みに失敗しました")
+			//	errorResponse(w, http.StatusInternalServerError, "レスポンスの読み込みに失敗しました")
 			log.Println(err.Error())
 			return
 		}
@@ -2038,7 +2051,7 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 		output := CancelPaymentInformationResponse{}
 		err = json.Unmarshal(body, &output)
 		if err != nil {
-			errorResponse(w, http.StatusInternalServerError, "JSON parseに失敗しました")
+			//	errorResponse(w, http.StatusInternalServerError, "JSON parseに失敗しました")
 			log.Println(err.Error())
 			return
 		}
@@ -2048,10 +2061,10 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query = "DELETE FROM reservations WHERE reservation_id=? AND user_id=?"
-	_, err = tx.Exec(query, itemID, user.ID)
+	_, err = tx.Exec(query, itemID, userID)
 	if err != nil {
 		tx.Rollback()
-		errorResponse(w, http.StatusInternalServerError, err.Error())
+		//		errorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -2059,18 +2072,17 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = tx.Exec(query, itemID)
 	if err == sql.ErrNoRows {
 		tx.Rollback()
-		errorResponse(w, http.StatusInternalServerError, "seat naiyo")
+		//errorResponse(w, http.StatusInternalServerError, "seat naiyo")
 		// errorResponse(w, http.Status, "authentication failed")
 		return
 	}
 	if err != nil {
 		tx.Rollback()
-		errorResponse(w, http.StatusInternalServerError, err.Error())
+		//		errorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	tx.Commit()
-	messageResponse(w, "cancell complete")
 }
 
 func initializeHandler(w http.ResponseWriter, r *http.Request) {
