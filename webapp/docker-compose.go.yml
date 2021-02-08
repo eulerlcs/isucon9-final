@@ -14,5 +14,3 @@ services:
       - payment
     ports:
       - "127.0.0.1:8000:8000"
-    networks:
-      - isucon-09-final-network

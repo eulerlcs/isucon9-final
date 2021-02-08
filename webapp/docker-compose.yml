@@ -11,8 +11,6 @@ services:
     ports:
       - "8080:80"
       - "5000:5000"
-    networks:
-      - isucon-09-final-network
     links:
       - "webapp"
       - "payment"
@@ -32,8 +30,6 @@ services:
     # development only
     ports:
       - "13306:3306"
-    networks:
-      - isucon-09-final-network
 
   redis:
 #    restart: always
@@ -48,8 +44,6 @@ services:
       - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
-    networks:
-      - isucon-09-final-network
     tty: true
 
   payment:
@@ -65,26 +59,18 @@ services:
     working_dir: /go/src/payment
     env_file:
       - ".env"
-    networks:
-      - isucon-09-final-network
 
-  # development only
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    environment:
-      - PMA_ARBITRARY=1
-      - PMA_HOST=mysql
-      - PMA_USER=root
-      - PMA_PASSWORD=password
-    links:
-      - mysql
-    ports:
-       - 8082:80
-    volumes:
-       - /sessions
-    networks:
-      - isucon-09-final-network
-
-networks:
-  isucon-09-final-network:
-    driver: bridge
+# development only
+#  phpmyadmin:
+#    image: phpmyadmin/phpmyadmin
+#    environment:
+#      - PMA_ARBITRARY=1
+#      - PMA_HOST=mysql
+#      - PMA_USER=root
+#      - PMA_PASSWORD=password
+#    links:
+#      - mysql
+#    ports:
+#       - 8082:80
+#    volumes:
+#       - /sessions
