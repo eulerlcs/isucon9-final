@@ -15,7 +15,7 @@ func GetStationsHandler(w http.ResponseWriter, r *http.Request) {
 	*/
 	var stationMasterDao dbCache.StationMasterDao
 
-	stations, _ := stationMasterDao.SelectAllByIDAsc()
+	stations, _ := stationMasterDao.SelectAllByIDAscForResponse()
 
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	json.NewEncoder(w).Encode(stations)

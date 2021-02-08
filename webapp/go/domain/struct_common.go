@@ -16,6 +16,16 @@ type Station struct {
 	IsStopLocal       bool    `json:"is_stop_local" db:"is_stop_local"`
 }
 
+// Station comment
+type StationForResponse struct {
+	ID                int     `json:"id" db:"id"`
+	Name              string  `json:"name" db:"name"`
+	Distance          float64 `json:"-" db:"distance"`
+	IsStopExpress     bool    `json:"is_stop_express" db:"is_stop_express"`
+	IsStopSemiExpress bool    `json:"is_stop_semi_express" db:"is_stop_semi_express"`
+	IsStopLocal       bool    `json:"is_stop_local" db:"is_stop_local"`
+}
+
 // DistanceFare comment
 type DistanceFare struct {
 	Distance float64 `json:"distance" db:"distance"`

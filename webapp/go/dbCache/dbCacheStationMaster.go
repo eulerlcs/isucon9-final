@@ -49,6 +49,24 @@ func (slf *StationMasterDao) SelectAllByIDAsc() ([]domain.Station, error) {
 	return stations, nil
 }
 
+func (slf *StationMasterDao) SelectAllByIDAscForResponse() ([]domain.StationForResponse, error) {
+	slf.waitUtilCached()
+
+	redis0 := (&utils.REDIS{}).GetRedisClient(0)
+	defer redis0.Close()
+
+	size := int(redis0.HLen("station:id").Val())
+	stations := make([]domain.StationForResponse, size)
+
+	for i := 1; i <= size; i++ {
+		str := redis0.HGet("station:id", strconv.Itoa(i)).Val()
+		fmt.Println(str)
+		json.Unmarshal([]byte(str), &stations[i-1])
+	}
+
+	return stations, nil
+}
+
 func (slf *StationMasterDao) SelectAllByIDDesc() ([]domain.Station, error) {
 	stations, _ := slf.SelectAllByIDAsc()
 	sort.SliceStable(stations, func(i, j int) bool {
