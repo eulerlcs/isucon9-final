@@ -33,7 +33,7 @@ services:
 
   redis:
 #    restart: always
-    image: "eulerlcs-redis:6.0.10"
+    image: "eulerlcs-redis:5.0.10"
     container_name: redis-server
     build:
       context: ./redis/
