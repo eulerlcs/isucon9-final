@@ -27,6 +27,7 @@ func PrepareServers() {
 func ppf() {
 	if os.Getenv("PPROF") == "true" {
 		go func() {
+			log.Println("ZSJ - PPROF=true")
 			log.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
 	}
