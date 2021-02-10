@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-session/session"
 	goji "goji.io"
 	"goji.io/pat"
 	"log"
@@ -22,12 +21,7 @@ var (
 )
 
 func main() {
-	prepareServers()
-
-	redisStore15 := (&utils.REDIS{}).GetRedisStore(15)
-	session.InitManager(
-		session.SetStore(redisStore15),
-	)
+	utils.PrepareServers()
 
 	log.Println("ZSJ - init cache begin...")
 	go dbCacheSiJian.InitCache()
@@ -35,15 +29,6 @@ func main() {
 	log.Println("ZSJ - init cache end.")
 
 	routing()
-}
-
-//var (
-//	store sessions.Store = sessions.NewCookieStore([]byte(secureRandomStr(20)))
-//)
-func prepareServers() {
-	// mysql、redisの順で起動を確認する
-	(&utils.MYSQL{}).WaitOK()
-	(&utils.REDIS{}).WaitOK()
 }
 
 func routing() {
