@@ -48,7 +48,7 @@ func TrainSearchHandler(w http.ResponseWriter, r *http.Request) {
 	adult, _ := strconv.Atoi(r.URL.Query().Get("adult"))
 	child, _ := strconv.Atoi(r.URL.Query().Get("child"))
 
-	var fromStation, toStation domain.Station
+	var fromStation, toStation *domain.Station
 	fromStation, _ = stationMasterDao.SelectByName(fromName)
 	toStation, _ = stationMasterDao.SelectByName(toName)
 
@@ -63,7 +63,7 @@ func TrainSearchHandler(w http.ResponseWriter, r *http.Request) {
 	//	query += " DESC"
 	//}
 
-	usableTrainClassList := GetUsableTrainClassList(fromStation, toStation)
+	usableTrainClassList := GetUsableTrainClassList(*fromStation, *toStation)
 
 	var inQuery string
 	var inArgs []interface{}
@@ -204,23 +204,23 @@ func TrainSearchHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			premium_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, fromStation, toStation, "premium", false)
+			premium_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, *fromStation, *toStation, "premium", false)
 			if err != nil {
 				errorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
-			premium_smoke_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, fromStation, toStation, "premium", true)
+			premium_smoke_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, *fromStation, *toStation, "premium", true)
 			if err != nil {
 				errorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
 
-			reserved_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, fromStation, toStation, "reserved", false)
+			reserved_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, *fromStation, *toStation, "reserved", false)
 			if err != nil {
 				errorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
-			reserved_smoke_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, fromStation, toStation, "reserved", true)
+			reserved_smoke_avail_seats, err := dbCacheSiJian.GetAvailableSeats(train, *fromStation, *toStation, "reserved", true)
 			if err != nil {
 				errorResponse(w, http.StatusBadRequest, err.Error())
 				return

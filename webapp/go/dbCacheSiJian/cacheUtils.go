@@ -101,7 +101,8 @@ var cacheStationMapById = make(map[int]domain.Station)
 var cacheStationMapByName = make(map[string]domain.Station)
 
 func initCacheStationList() ([]domain.Station, error) {
-	var dbx = utils.Dbx
+	var dbx = (&utils.MYSQL{}).GetDB()
+	defer dbx.Close()
 
 	cacheStationList = []domain.Station{}
 
@@ -177,7 +178,7 @@ func initCacheSeatList() ([]domain.Seat, error) {
 }
 
 func SelectSeatBy(trainClass string, carNumber int, seatColumn string, seatRow int, seatClass string, isSmokingSeat string) []domain.Seat {
-	var seatList []domain.Seat
+	seatList := []domain.Seat{}
 	for _, v := range cacheSeatList {
 		if trainClass != "" && v.TrainClass != trainClass {
 			continue

@@ -5,14 +5,13 @@ import (
 	"time"
 )
 
-var (
+const (
 	InitCheckInterval = 500 * time.Millisecond
 	WaitTimeMax       = 120 * time.Minute
 )
 
 func IsCached(field string) bool {
-	redis1 := RedisClient1
-	pipe := redis1.Pipeline()
+	pipe := Rdb.Pipeline()
 	result := pipe.HSetNX("init:status", field, "1")
 	pipe.Exec()
 
@@ -20,7 +19,7 @@ func IsCached(field string) bool {
 	if err == nil {
 		return !ret
 	} else {
-		log.Printf("failed to connect to DB: %s.\n", err.Error())
+		log.Printf("ZSJ - failed to connect to DB: %s.\n", err.Error())
 		return false
 	}
 }

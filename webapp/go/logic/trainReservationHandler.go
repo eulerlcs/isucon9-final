@@ -105,12 +105,12 @@ func TrainReservationHandler(w http.ResponseWriter, r *http.Request) {
 	tmas = trainList[0]
 
 	// 列車自体の駅IDを求める
-	var departureStation, arrivalStation domain.Station
+	var departureStation, arrivalStation *domain.Station
 	departureStation, _ = stationMasterDao.SelectByName(tmas.StartStation)
 	arrivalStation, _ = stationMasterDao.SelectByName(tmas.LastStation)
 
 	// リクエストされた乗車区間の駅IDを求める
-	var fromStation, toStation domain.Station
+	var fromStation, toStation *domain.Station
 	fromStation, _ = stationMasterDao.SelectByName(req.Departure)
 	toStation, _ = stationMasterDao.SelectByName(req.Arrival)
 
@@ -195,7 +195,7 @@ func TrainReservationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		train = trainList[0]
 
-		usableTrainClassList := GetUsableTrainClassList(fromStation, toStation)
+		usableTrainClassList := GetUsableTrainClassList(*fromStation, *toStation)
 		usable := false
 		for _, v := range usableTrainClassList {
 			if v == train.TrainClass {
@@ -256,7 +256,7 @@ func TrainReservationHandler(w http.ResponseWriter, r *http.Request) {
 						panic(err)
 					}
 
-					var departureStation, arrivalStation domain.Station
+					var departureStation, arrivalStation *domain.Station
 					departureStation, _ = stationMasterDao.SelectByName(reservation.Departure)
 					arrivalStation, _ = stationMasterDao.SelectByName(reservation.Arrival)
 
@@ -432,7 +432,7 @@ func TrainReservationHandler(w http.ResponseWriter, r *http.Request) {
 		tmas = trainList[0]
 
 		// 予約情報の乗車区間の駅IDを求める
-		var reservedfromStation, reservedtoStation domain.Station
+		var reservedfromStation, reservedtoStation *domain.Station
 		reservedfromStation, _ = stationMasterDao.SelectByName(reservation.Departure)
 		reservedtoStation, _ = stationMasterDao.SelectByName(reservation.Arrival)
 

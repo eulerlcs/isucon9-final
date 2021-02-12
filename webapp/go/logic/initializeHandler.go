@@ -14,7 +14,7 @@ var wg sync.WaitGroup
 
 const (
 	// sessionName   = "session_isutrain"
-	availableDays = 10
+	availableDays = 90
 )
 
 func InitializeHandler(w http.ResponseWriter, r *http.Request) {

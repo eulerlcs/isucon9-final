@@ -60,11 +60,11 @@ func TrainSeatsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	train = trainList[0]
 
-	var fromStation, toStation domain.Station
+	var fromStation, toStation *domain.Station
 	fromStation, _ = stationMasterDao.SelectByName(fromName)
 	toStation, _ = stationMasterDao.SelectByName(toName)
 
-	usableTrainClassList := GetUsableTrainClassList(fromStation, toStation)
+	usableTrainClassList := GetUsableTrainClassList(*fromStation, *toStation)
 	usable := false
 	for _, v := range usableTrainClassList {
 		if v == train.TrainClass {
@@ -126,7 +126,7 @@ func TrainSeatsHandler(w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 
-			var departureStation, arrivalStation domain.Station
+			var departureStation, arrivalStation *domain.Station
 			departureStation, _ = stationMasterDao.SelectByName(reservation.Departure)
 			arrivalStation, _ = stationMasterDao.SelectByName(reservation.Arrival)
 

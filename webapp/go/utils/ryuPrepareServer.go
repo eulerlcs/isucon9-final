@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
 )
 
 func PrepareServers() {
@@ -16,18 +15,15 @@ func PrepareServers() {
 	(&MYSQL{}).WaitOK()
 	(&REDIS{}).WaitOK()
 
-	redisStore15 := (&REDIS{}).GetRedisStore(15)
 	session.InitManager(
-		session.SetStore(redisStore15),
+		session.SetStore(sessionManagerStore),
 	)
 }
 
 // 性能モニターを起動する
 func ppf() {
-	if os.Getenv("PPROF") == "true" {
-		go func() {
-			log.Println("ZSJ - PPROF=true")
-			log.Println(http.ListenAndServe(":6060", nil))
-		}()
-	}
+	go func() {
+		log.Println("ZSJ - PPROF=true")
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
 }

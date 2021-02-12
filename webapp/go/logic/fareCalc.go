@@ -15,7 +15,7 @@ func fareCalc(date time.Time, depStation int, destStation int, trainClass, seatC
 	// 距離運賃(円) * 期間倍率(繁忙期なら2倍等) * 車両クラス倍率(急行・各停等) * 座席クラス倍率(プレミアム・指定席・自由席)
 	//
 	var err error
-	var fromStation, toStation domain.Station
+	var fromStation, toStation *domain.Station
 
 	var stationMasterDao dbCache.StationMasterDao
 

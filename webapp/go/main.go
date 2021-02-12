@@ -9,7 +9,6 @@ import (
 	"sync"
 	"zsj-isucon-09-final/dbCache"
 	_ "zsj-isucon-09-final/dbCache"
-	"zsj-isucon-09-final/dbCacheSiJian"
 	"zsj-isucon-09-final/logic"
 	"zsj-isucon-09-final/utils"
 	// "sync"
@@ -23,10 +22,9 @@ var (
 func main() {
 	utils.PrepareServers()
 
-	log.Println("ZSJ - init cache begin...")
-	go dbCacheSiJian.InitCache()
-	go dbCache.DoCacheAll()
-	log.Println("ZSJ - init cache end.")
+	defer utils.Dbx.Close()
+
+	dbCache.DoCacheAll()
 
 	routing()
 }

@@ -9,41 +9,39 @@ import (
 	"time"
 )
 
-type REDIS struct{}
-
-var RedisClient1 *redis.Client
-
-var (
+type REDIS struct {
 	redisHost string
 	redisPort string
+}
+
+var (
+	Rdb                 *redis.Client
+	sessionManagerStore session.ManagerStore
 )
 
-func (myRedis *REDIS) WaitOK() {
-	if RedisClient1 != nil {
+func (slf *REDIS) WaitOK() {
+	if Rdb != nil {
 		return
 	} else {
-		RedisClient1 = myRedis.getRedisClient(1)
+		Rdb = slf.getRedisClient(1)
+	}
+
+	if sessionManagerStore != nil {
+		return
+	} else {
+		sessionManagerStore = slf.getSessionManagerStore(15)
 	}
 }
 
-func (myRedis *REDIS) GetRedisStore(db int) session.ManagerStore {
-	store := sessionRedis.NewRedisStore(&sessionRedis.Options{
-		Addr: redisHost + ":" + redisPort,
-		DB:   db,
-	})
-
-	return store
-}
-
-func (myRedis *REDIS) getRedisClient(db int, timeout ...time.Duration) *redis.Client {
-	redisHost = os.Getenv("REDIS_HOST")
-	if redisHost == "" {
-		redisHost = "127.0.0.1"
+func (slf *REDIS) getRedisClient(db int, timeout ...time.Duration) *redis.Client {
+	slf.redisHost = os.Getenv("REDIS_HOST")
+	if slf.redisHost == "" {
+		slf.redisHost = "127.0.0.1"
 	}
 
-	redisPort = os.Getenv("REDIS_PORT")
-	if redisPort == "" {
-		redisPort = "6379"
+	slf.redisPort = os.Getenv("REDIS_PORT")
+	if slf.redisPort == "" {
+		slf.redisPort = "6379"
 	}
 
 	spentTime := 0 * time.Second
@@ -54,7 +52,7 @@ func (myRedis *REDIS) getRedisClient(db int, timeout ...time.Duration) *redis.Cl
 
 	for {
 		newClient := redis.NewClient(&redis.Options{
-			Addr:     redisHost + ":" + redisPort,
+			Addr:     slf.redisHost + ":" + slf.redisPort,
 			Password: "",
 			DB:       db,
 		})
@@ -64,7 +62,7 @@ func (myRedis *REDIS) getRedisClient(db int, timeout ...time.Duration) *redis.Cl
 			log.Println("ZSJ - succeeded to connect to redis.")
 			return newClient
 		} else {
-			log.Printf("failed to connect to redis: %s\n", err.Error())
+			log.Printf("ZSJ - failed to connect to redis: %s\n", err.Error())
 
 			if newClient != nil {
 				newClient.Close()
@@ -80,4 +78,13 @@ func (myRedis *REDIS) getRedisClient(db int, timeout ...time.Duration) *redis.Cl
 	}
 
 	return nil
+}
+
+func (slf *REDIS) getSessionManagerStore(db int) session.ManagerStore {
+	store := sessionRedis.NewRedisStore(&sessionRedis.Options{
+		Addr: slf.redisHost + ":" + slf.redisPort,
+		DB:   db,
+	})
+
+	return store
 }
