@@ -78,16 +78,11 @@ func (slf *MYSQL) doGetDB() (*sqlx.DB, error) {
 }
 
 func (slf *MYSQL) getDsn() string {
-	//		Host:     getEnv("MYSQL_HOST", "127.0.0.1"),
-	//		Port:     getEnv("MYSQL_PORT", "3306"),
-	//		User:     getEnv("MYSQL_USER", "isucon"),
-	//		DBName:   getEnv("MYSQL_DBNAME", "isuumo"),
-	//		Password: getEnv("MYSQL_PASS", "isucon"),
-
-	host := os.Getenv("MYSQL_HOST")
+	host := os.Getenv("MYSQL_HOSTNAME")
 	if host == "" {
 		host = "127.0.0.1"
 	}
+
 	port := os.Getenv("MYSQL_PORT")
 	if port == "" {
 		port = "3306"
@@ -96,15 +91,18 @@ func (slf *MYSQL) getDsn() string {
 	if err != nil {
 		log.Fatalf("failed to read DB port number from an environment variable MYSQL_PORT.\nError: %s", err.Error())
 	}
+
+	dbname := os.Getenv("MYSQL_DATABASE")
+	if dbname == "" {
+		dbname = "isutrain"
+	}
+
 	user := os.Getenv("MYSQL_USER")
 	if user == "" {
 		user = "isutrain"
 	}
-	dbname := os.Getenv("MYSQL_DBNAME")
-	if dbname == "" {
-		dbname = "isutrain"
-	}
-	password := os.Getenv("MYSQL_PASS")
+
+	password := os.Getenv("MYSQL_PASSWORD")
 	if password == "" {
 		password = "isutrain"
 	}
